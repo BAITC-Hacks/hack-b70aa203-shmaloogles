@@ -148,12 +148,26 @@ func (store *Store) Update(ctx context.Context, id int64, input UpdateInput, rea
 }
 
 func (store *Store) Confirm(ctx context.Context, id int64, readiness scoring.Result) (Task, error) {
+	tx, err := store.db.Begin(ctx)
+	if err != nil {
+		return Task{}, fmt.Errorf("begin confirmation: %w", err)
+	}
+	defer tx.Rollback(ctx)
+	current, err := scanTask(tx.QueryRow(ctx, `SELECT `+taskColumns+` FROM tasks WHERE id = $1 AND status = 'draft' FOR UPDATE`, id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return Task{}, ErrNotFound
+	}
+	if err != nil {
+		return Task{}, fmt.Errorf("lock task: %w", err)
+	}
+	// Recalculate from the locked row, never from the caller's earlier snapshot.
+	readiness = scoring.Calculate(current.Card())
 	breakdown, suggestions, err := readinessValues(readiness)
 	if err != nil {
 		return Task{}, err
 	}
 
-	row := store.db.QueryRow(ctx, `
+	row := tx.QueryRow(ctx, `
 		UPDATE tasks SET
 			status = 'confirmed',
 			readiness_score = $2,
@@ -172,7 +186,14 @@ func (store *Store) Confirm(ctx context.Context, id int64, readiness scoring.Res
 		readiness.MissingFields,
 		suggestions,
 	)
-	return taskFromMutation(row, "confirm task")
+	task, err := taskFromMutation(row, "confirm task")
+	if err != nil {
+		return Task{}, err
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return Task{}, fmt.Errorf("commit confirmation: %w", err)
+	}
+	return task, nil
 }
 
 func (store *Store) Publish(ctx context.Context, id int64) (Task, error) {
