@@ -7,10 +7,24 @@ import (
 
 	"github.com/shmaloogles/business-task-platform/backend/internal/ai"
 	"github.com/shmaloogles/business-task-platform/backend/internal/scoring"
+	"github.com/shmaloogles/business-task-platform/backend/internal/taskcard"
 )
 
 // RegisterAIRoutes adds stateless AI routes without reading or writing tasks.
 func RegisterAIRoutes(mux *http.ServeMux, service *ai.Service) {
+	// Preview edited cards using the same formula as generation and persistence.
+	// This route does not call the provider or change confirmation/publication.
+	mux.HandleFunc("POST /api/tasks/score", func(w http.ResponseWriter, r *http.Request) {
+		var card *taskcard.Card
+		if !decodeAIRequest(w, r, &card) {
+			return
+		}
+		if card == nil {
+			writeError(w, http.StatusBadRequest, "invalid_input", "request body must be a task card object")
+			return
+		}
+		writeJSON(w, http.StatusOK, scoring.Calculate(*card))
+	})
 	mux.HandleFunc("POST /api/tasks/clarify", func(w http.ResponseWriter, r *http.Request) {
 		var input struct {
 			Description string `json:"description"`

@@ -92,6 +92,11 @@ func TestAIFlowPostgres(t *testing.T) {
 	if generated.Mode != "mock" || generated.Readiness.Score != 60 {
 		t.Fatalf("%+v", generated)
 	}
+	var preview scoring.Result
+	request("POST", "/api/tasks/score", generated.Card, &preview, http.StatusOK)
+	if !reflect.DeepEqual(preview, generated.Readiness) {
+		t.Fatal("preview and generation readiness differ")
+	}
 	path := fmt.Sprintf("/api/tasks/%d", created.ID)
 	var updated, loaded tasks.Task
 	request("PUT", path, generated.Card, &updated, http.StatusOK)
@@ -108,8 +113,16 @@ func TestAIFlowPostgres(t *testing.T) {
 	}
 	// Clear a field through the real PUT to verify null handling and a lower score.
 	generated.Card.Users = nil
+	request("POST", "/api/tasks/score", generated.Card, &preview, http.StatusOK)
+	request("GET", path, nil, &loaded, http.StatusOK)
+	if preview.Score != 50 || loaded.ReadinessScore != 60 || loaded.Users == nil {
+		t.Fatal("preview must reflect edits without persisting them")
+	}
 	request("PUT", path, generated.Card, &updated, http.StatusOK)
 	request("GET", path, nil, &loaded, http.StatusOK)
+	if loaded.ReadinessScore != int16(preview.Score) {
+		t.Fatal("persisted readiness differs from preview")
+	}
 	loaded.RecalculateReadiness()
 	if loaded.Users != nil || loaded.ReadinessScore != 50 {
 		t.Fatalf("null/edit did not survive persistence: %+v", loaded)

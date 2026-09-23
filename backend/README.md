@@ -38,6 +38,9 @@ The server listens on port `8080` by default. Set `PORT` to override it.
 - `POST /api/tasks/clarify` — AI clarification; body `{"description":"..."}`
 - `POST /api/tasks/generate` — generate a card and a preliminary readiness score;
   body `{"description":"...","answers":[{"field":"need","answer":"..."}]}`
+- `POST /api/tasks/score` — preview readiness after editing; body is the card
+  itself (for example `{"context":"Current process","need":"Desired change"}`);
+  no AI call, persistence or confirmation
 
 AI defaults to an explicitly labelled deterministic mock. OpenAI configuration,
 request/response contracts and scoring integration are in [AI_SCORING.md](AI_SCORING.md).
