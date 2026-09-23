@@ -166,6 +166,33 @@ func TestListTasksPassesCatalogFilters(t *testing.T) {
 	}
 }
 
+func TestListTasksAllowsBusinessScope(t *testing.T) {
+	store := &fakeTaskStore{items: []tasks.Task{}}
+	request := httptest.NewRequest(http.MethodGet, "/api/tasks?scope=all", nil)
+	recorder := httptest.NewRecorder()
+
+	New(fakeDatabase{}, store, nil, nil).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d", http.StatusOK, recorder.Code)
+	}
+	if !store.listFilter.IncludeAll {
+		t.Fatal("expected all task statuses to be requested")
+	}
+}
+
+func TestListTasksRejectsInvalidScope(t *testing.T) {
+	store := &fakeTaskStore{}
+	request := httptest.NewRequest(http.MethodGet, "/api/tasks?scope=private", nil)
+	recorder := httptest.NewRecorder()
+
+	New(fakeDatabase{}, store, nil, nil).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusBadRequest {
+		t.Fatalf("expected status %d, got %d", http.StatusBadRequest, recorder.Code)
+	}
+}
+
 func TestListTasksRejectsInvalidFilter(t *testing.T) {
 	store := &fakeTaskStore{}
 	request := httptest.NewRequest(http.MethodGet, "/api/tasks?readiness_level=excellent", nil)

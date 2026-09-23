@@ -20,6 +20,10 @@ func (store fakeProposalStore) Create(context.Context, int64, proposals.CreateIn
 	return store.proposal, store.err
 }
 
+func (store fakeProposalStore) List(context.Context) ([]proposals.Proposal, error) {
+	return store.items, store.err
+}
+
 func (store fakeProposalStore) ListByTask(context.Context, int64) ([]proposals.Proposal, error) {
 	return store.items, store.err
 }
@@ -37,6 +41,21 @@ func TestCreateProposal(t *testing.T) {
 
 	if recorder.Code != http.StatusCreated {
 		t.Fatalf("expected status %d, got %d: %s", http.StatusCreated, recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestListAllProposals(t *testing.T) {
+	store := fakeProposalStore{items: []proposals.Proposal{{ID: 10, TaskID: 1, TeamID: 2}}}
+	request := httptest.NewRequest(http.MethodGet, "/api/proposals", nil)
+	recorder := httptest.NewRecorder()
+
+	New(fakeDatabase{}, nil, nil, store).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected status %d, got %d: %s", http.StatusOK, recorder.Code, recorder.Body.String())
+	}
+	if !strings.Contains(recorder.Body.String(), `"id":10`) {
+		t.Fatalf("unexpected response body: %s", recorder.Body.String())
 	}
 }
 

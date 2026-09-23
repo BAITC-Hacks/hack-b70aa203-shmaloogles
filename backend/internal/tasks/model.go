@@ -42,6 +42,7 @@ type ListFilter struct {
 	Topic          string
 	ReadinessLevel string
 	Sort           string
+	IncludeAll     bool
 }
 
 // UpdateInput shares the AI/scoring contract without changing the CRUD JSON shape.

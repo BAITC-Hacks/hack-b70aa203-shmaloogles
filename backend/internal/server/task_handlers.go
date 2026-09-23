@@ -28,6 +28,11 @@ func listTasksHandler(store taskStore) http.HandlerFunc {
 			Topic:          strings.TrimSpace(r.URL.Query().Get("topic")),
 			ReadinessLevel: strings.TrimSpace(r.URL.Query().Get("readiness_level")),
 			Sort:           strings.TrimSpace(r.URL.Query().Get("sort")),
+			IncludeAll:     strings.TrimSpace(r.URL.Query().Get("scope")) == "all",
+		}
+		if scope := strings.TrimSpace(r.URL.Query().Get("scope")); scope != "" && scope != "all" {
+			writeError(w, http.StatusBadRequest, "invalid_scope", "scope must be all when provided")
+			return
 		}
 		if !validReadinessLevel(filter.ReadinessLevel) {
 			writeError(w, http.StatusBadRequest, "invalid_readiness_level", "readiness_level must be draft, workable, ready, or priority")

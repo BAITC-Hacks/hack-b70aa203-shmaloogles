@@ -1,34 +1,9 @@
 <script setup lang="ts">
-const props = defineProps<{ taskId: string }>();
-const { submitProposal } = useDemo();
-const { role } = useRole();
-const sent = ref(false);
-const form = reactive({ team: '', idea: '', plan: '', timeframe: '', prototypeUrl: '' });
-const urlError = ref('');
-function submit() {
-  if (role.value !== 'team') return;
-  urlError.value = '';
-  if (form.prototypeUrl.trim()) {
-    try {
-      if (!['http:', 'https:'].includes(new URL(form.prototypeUrl.trim()).protocol)) throw new Error('Invalid protocol');
-    } catch {
-      urlError.value = 'Укажите ссылку, начинающуюся с https:// или http://.';
-      return;
-    }
-  }
-  submitProposal({ taskId: props.taskId, team: form.team.trim(), idea: form.idea.trim(), plan: form.plan.trim(), timeframe: form.timeframe.trim(), prototypeUrl: form.prototypeUrl.trim() || undefined });
-  sent.value = true;
-}
+const props = defineProps<{ taskId: string }>(); const platform = usePlatformApi(); const { selectedTeamId } = useRole();
+const { data: teams, error: teamsError } = await useAsyncData('proposal-teams', platform.listTeams);
+watchEffect(() => { if (!selectedTeamId.value && teams.value?.[0]) selectedTeamId.value = teams.value[0].id; });
+const sent = ref(false); const loading = ref(false); const error = ref('');
+const form = reactive({ idea: '', plan: '', timeframe: '', prototypeUrl: '' });
+async function submit() { if (!selectedTeamId.value) return; loading.value = true; error.value = ''; try { await platform.createProposal(props.taskId, { teamId: selectedTeamId.value, ...form, prototypeUrl: form.prototypeUrl.trim() || undefined }); sent.value = true; } catch (cause) { error.value = cause instanceof Error ? cause.message : 'Не удалось отправить предложение'; } finally { loading.value = false; } }
 </script>
-
-<template>
-  <div v-if="sent" class="proposal-success" role="status"><span class="success-symbol"><AppIcon name="check" :size="30" /></span><span class="eyebrow muted">ПЕРВЫЙ ШАГ СДЕЛАН</span><h2>Предложение отправлено!</h2><p>Теперь слово за бизнесом. Статус решения появится в разделе ваших предложений.</p><NuxtLink to="/proposals" class="button button-primary">Мои предложения <AppIcon name="arrow" :size="17" /></NuxtLink><span class="demo-caption">Предложение сохранено в демо-пространстве</span></div>
-  <form v-else class="proposal-form" @submit.prevent="submit">
-    <span class="eyebrow muted">ВАШ ПОДХОД МОЖЕТ ВСЁ ИЗМЕНИТЬ</span><h2>Давайте знакомиться.</h2><p class="form-intro">Расскажите, как ваша команда видит решение этой задачи.</p>
-    <label class="field"><span>Название команды <span class="required">*</span></span><input v-model="form.team" required pattern=".*\S.*" maxlength="100" placeholder="Как к вам обращаться?"></label>
-    <label class="field"><span>Ваша идея <span class="required">*</span></span><textarea v-model="form.idea" required minlength="10" maxlength="4000" rows="4" placeholder="Как вы предлагаете решить задачу? В чём особенность вашего подхода?" /></label>
-    <label class="field"><span>Краткий план <span class="required">*</span></span><textarea v-model="form.plan" required minlength="10" maxlength="4000" rows="3" placeholder="С чего начнёте и какие шаги планируете пройти?" /></label>
-    <div class="form-two-columns"><label class="field"><span>Предполагаемый срок <span class="required">*</span></span><input v-model="form.timeframe" required pattern=".*\S.*" maxlength="100" placeholder="Например, 3–4 недели"></label><label class="field"><span>Ссылка на прототип <small>необязательно</small></span><input v-model="form.prototypeUrl" type="url" maxlength="2000" placeholder="https://" :aria-invalid="!!urlError" :aria-describedby="urlError ? 'prototype-error' : undefined"><small v-if="urlError" id="prototype-error" class="error-text" role="alert">{{ urlError }}</small></label></div>
-    <div class="form-actions"><span class="form-assurance"><AppIcon name="info" :size="16" />Решение принимает бизнес</span><button class="button button-primary" type="submit">Отправить предложение <AppIcon name="send" :size="17" /></button></div>
-  </form>
-</template>
+<template><div v-if="sent" class="proposal-success"><h2>Предложение отправлено!</h2><p>Статус появится в разделе ваших предложений.</p><NuxtLink to="/proposals" class="button button-primary">Мои предложения</NuxtLink></div><form v-else class="proposal-form" @submit.prevent="submit"><h2>Давайте знакомиться.</h2><label class="field"><span>Команда</span><select v-model="selectedTeamId" required><option value="" disabled>Выберите команду</option><option v-for="team in teams || []" :key="team.id" :value="team.id">{{ team.name }}</option></select></label><p v-if="teamsError" class="error-text">Не удалось загрузить команды</p><label class="field"><span>Ваша идея *</span><textarea v-model="form.idea" required minlength="10" rows="4" /></label><label class="field"><span>Краткий план *</span><textarea v-model="form.plan" required minlength="10" rows="3" /></label><div class="form-two-columns"><label class="field"><span>Предполагаемый срок *</span><input v-model="form.timeframe" required></label><label class="field"><span>Ссылка на прототип</span><input v-model="form.prototypeUrl" type="url" placeholder="https://"></label></div><p v-if="error" class="error-text">{{ error }}</p><div class="form-actions"><button class="button button-primary" :disabled="loading || !selectedTeamId">{{ loading ? 'Отправляем…' : 'Отправить предложение' }}</button></div></form></template>

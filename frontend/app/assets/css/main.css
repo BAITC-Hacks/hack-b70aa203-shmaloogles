@@ -220,9 +220,9 @@ svg { display: block; }
 .catalog-callout p { margin-top: 5px; font-size: 13px; color: #65758c; }
 .callout-decoration { position: absolute; right: 17px; top: -15px; line-height: 1.2; color: #d4e4fc; font-size: 120px; transform: rotate(-8deg); pointer-events: none; }
 .catalog-callout > div { position: relative; z-index: 1; }
-.catalog-toolbar { display: flex; gap: 14px; margin-bottom: 24px; }
+.catalog-toolbar { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 24px; }
 .search-field, .select-field { display: flex; align-items: center; gap: 10px; background: white; border: 1px solid #e1e8f2; border-radius: 9px; min-height: 47px; padding: 0 15px; color: #91a1b7; }
-.search-field { flex: 1; }
+.search-field { flex: 1 1 260px; }
 .search-field:focus-within { border-color: #92b6ef; box-shadow: 0 0 0 3px #e9f1ff; }
 .search-field input { width: 100%; min-width: 0; border: none; outline: none; background: transparent; color: var(--ink); font-size: 13px; }
 .search-field input:focus-visible { outline: none; }
@@ -336,8 +336,8 @@ input::placeholder, textarea::placeholder { color: #8b99ad; opacity: 1; }
 .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 22px; }
 .field > span { display: flex; align-items: center; gap: 4px; font-size: 13px; color: #506582; font-weight: 650; }
 .field .required { color: #7b9ccb; }
-.field input, .field textarea { background: white; border: 1px solid #dfe7f2; border-radius: 8px; padding: 12px 13px; color: #425774; font-size: 13px; width: 100%; line-height: 1.75; transition: border-color .2s, box-shadow .2s; }
-.field input:focus, .field textarea:focus { border-color: #97b9ed; box-shadow: 0 0 0 3px #eff5ff; }
+.field input, .field textarea, .field select { background: white; border: 1px solid #dfe7f2; border-radius: 8px; padding: 12px 13px; color: #425774; font-size: 13px; width: 100%; line-height: 1.75; transition: border-color .2s, box-shadow .2s; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: #97b9ed; box-shadow: 0 0 0 3px #eff5ff; }
 .field textarea { resize: vertical; min-height: 82px; }
 .field small { color: #66778f; font-size: 11px; line-height: 1.7; font-weight: 400; }
 .field > span > small { margin-left: auto; }
@@ -753,7 +753,7 @@ input::placeholder, textarea::placeholder { color: #63738b; }
   .assistant-heading > div > span { font-size: 11px; }
   .creation-form, .proposal-form-panel, .editor-panel { padding: 23px 20px; }
   .creation-form h2 { font-size: 21px; }
-  .field input, .field textarea { font-size: 16px; padding: 10px 12px; line-height: 1.65; }
+  .field input, .field textarea, .field select { font-size: 16px; padding: 10px 12px; line-height: 1.65; }
   .field textarea::placeholder, .field input::placeholder { font-size: 13px; }
   .field > span { font-size: 12px; }
   .field-bottom { gap: 10px; font-size: 11px; }

@@ -99,6 +99,31 @@ func (store *Store) ListByTask(ctx context.Context, taskID int64) ([]Proposal, e
 	return items, nil
 }
 
+func (store *Store) List(ctx context.Context) ([]Proposal, error) {
+	rows, err := store.db.Query(ctx, `
+		SELECT `+proposalColumns+`
+		FROM proposals p
+		JOIN teams t ON t.id = p.team_id
+		ORDER BY p.created_at DESC`)
+	if err != nil {
+		return nil, fmt.Errorf("list proposals: %w", err)
+	}
+	defer rows.Close()
+
+	items := make([]Proposal, 0)
+	for rows.Next() {
+		proposal, err := scanProposal(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan proposal: %w", err)
+		}
+		items = append(items, proposal)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("list proposal rows: %w", err)
+	}
+	return items, nil
+}
+
 func (store *Store) UpdateStatus(ctx context.Context, id int64, status string) (Proposal, error) {
 	row := store.db.QueryRow(ctx, `
 		WITH updated AS (

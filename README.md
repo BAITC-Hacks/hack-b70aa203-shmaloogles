@@ -29,6 +29,7 @@ AI_MODEL=gpt-4.1-mini
 
 После запуска доступны:
 
+* приложение: `http://localhost:3000`;
 * API: `http://localhost:8080`;
 * healthcheck: `http://localhost:8080/health`;
 * PostgreSQL: `localhost:5432`.
@@ -152,7 +153,7 @@ AI не выбирает исполнителя автоматически.
 
 ### Frontend
 
-* Next.js
+* Nuxt 4 / Vue 3
 * TypeScript
 
 ### Backend
@@ -172,7 +173,7 @@ LLM API используется для анализа первоначальн�
 
 ```text
 .
-├── frontend/       # Next.js frontend
+├── frontend/       # Nuxt frontend
 ├── backend/        # Go REST API
 ├── docs/
 │   ├── ARCHITECTURE.md

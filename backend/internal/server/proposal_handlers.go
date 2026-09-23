@@ -12,8 +12,20 @@ import (
 
 type proposalStore interface {
 	Create(context.Context, int64, proposals.CreateInput) (proposals.Proposal, error)
+	List(context.Context) ([]proposals.Proposal, error)
 	ListByTask(context.Context, int64) ([]proposals.Proposal, error)
 	UpdateStatus(context.Context, int64, string) (proposals.Proposal, error)
+}
+
+func listAllProposalsHandler(store proposalStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		items, err := store.List(r.Context())
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "could not list proposals")
+			return
+		}
+		writeJSON(w, http.StatusOK, items)
+	}
 }
 
 func createProposalHandler(store proposalStore) http.HandlerFunc {

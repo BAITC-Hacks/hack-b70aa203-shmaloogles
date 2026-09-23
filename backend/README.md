@@ -31,12 +31,14 @@ The server listens on port `8080` by default. Set `PORT` to override it.
 - `POST /api/tasks` — create a task draft from an initial description
 - `GET /api/tasks/{id}` — get a task
 - `GET /api/tasks` — list published tasks; supports `topic`, `readiness_level`, and readiness sorting
+- `GET /api/tasks?scope=all` — list every task for the simulated business workspace
 - `PUT /api/tasks/{id}` — replace editable fields and recalculate readiness
 - `POST /api/tasks/{id}/confirm` — confirm a draft and finalize its readiness
 - `POST /api/tasks/{id}/publish` — publish a confirmed task
 - `GET /api/teams` — list demo teams
 - `POST /api/tasks/{id}/proposals` — submit a proposal to a published task
 - `GET /api/tasks/{id}/proposals` — list proposals for a task
+- `GET /api/proposals` — list all proposals for the simulated business workspace
 - `PATCH /api/proposals/{id}` — accept or reject a proposal
 - `POST /api/tasks/clarify` — AI clarification; body `{"description":"..."}`
 - `POST /api/tasks/generate` — generate a card and a preliminary readiness score;
