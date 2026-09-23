@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { listTasks } = usePlatformApi();
-const { data: publishedTasks } = await useAsyncData('home-tasks', () => listTasks());
+const { data: publishedTasks, pending, error, refresh: reload } = await useAsyncData('home-tasks', () => listTasks());
+const refresh = () => reload();
 const { setRole } = useRole();
 const featured = computed(() => (publishedTasks.value || []).slice(0, 3));
 useHead({ title: 'Мост — у больших идей есть начало' });
@@ -29,7 +30,10 @@ useHead({ title: 'Мост — у больших идей есть начало'
     <section class="home-projects">
       <div class="section-heading"><div><span class="eyebrow muted">РЕАЛЬНЫЙ ОПЫТ НАЧИНАЕТСЯ ЗДЕСЬ</span><h2>Задачи со смыслом<span class="heading-dot">.</span></h2><p>Найдите то, во что захочется вложить свои знания.</p></div><NuxtLink to="/catalog" class="text-link">Весь каталог <AppIcon name="arrow" :size="18" /></NuxtLink></div>
       <div class="demo-caption"><span class="status-dot" />Опубликованные задачи</div>
-      <div class="task-grid"><TaskCard v-for="task in featured" :key="task.id" :task="task" /></div>
+      <div v-if="pending" class="state-panel" role="status"><span class="state-icon"><AppIcon name="compass" /></span><div><strong>Загружаем свежие задачи</strong><p>Подбираем проекты для знакомства с платформой.</p></div></div>
+      <div v-else-if="error" class="state-panel state-error" role="alert"><span class="state-icon"><AppIcon name="info" /></span><div><strong>Не удалось загрузить задачи</strong><button class="text-link" @click="refresh">Попробовать снова</button></div></div>
+      <div v-else-if="featured.length" class="task-grid"><TaskCard v-for="task in featured" :key="task.id" :task="task" /></div>
+      <EmptyState v-else title="Опубликованных задач пока нет" description="Скоро здесь появятся новые проекты от бизнеса." />
     </section>
 
     <section id="how-it-works" class="how-section">

@@ -1,4 +1,5 @@
 import type { Proposal, ProposalStatus, Task, TaskCard, TaskStatus, Team } from './task';
+import { topicLabel } from '~/utils/presentation';
 
 export interface TaskCardDto {
   title: string | null; topic: string | null; context: string | null; need: string | null;
@@ -21,7 +22,7 @@ export interface GenerationDto { card: TaskCardDto; mode: string; fallback_reaso
 
 const text = (value: string | null) => value ?? '';
 export const mapCard = (dto: TaskCardDto): TaskCard => ({
-  title: text(dto.title), topic: text(dto.topic), context: text(dto.context), need: text(dto.need),
+  title: text(dto.title), topic: dto.topic ? topicLabel(dto.topic) : '', context: text(dto.context), need: text(dto.need),
   users: text(dto.users), data: text(dto.data), constraints: text(dto.constraints),
   expectedResult: text(dto.expected_result), successCriteria: text(dto.success_criteria),
   contact: text(dto.contact), interactionFormat: text(dto.interaction_format),
