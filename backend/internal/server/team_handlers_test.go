@@ -23,7 +23,7 @@ func TestListTeams(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/api/teams", nil)
 	recorder := httptest.NewRecorder()
 
-	New(fakeDatabase{}, nil, store).ServeHTTP(recorder, request)
+	New(fakeDatabase{}, nil, store, nil).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, recorder.Code)
