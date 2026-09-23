@@ -12,6 +12,7 @@ import (
 
 	"github.com/shmaloogles/business-task-platform/backend/internal/database"
 	"github.com/shmaloogles/business-task-platform/backend/internal/server"
+	"github.com/shmaloogles/business-task-platform/backend/internal/tasks"
 )
 
 func main() {
@@ -36,7 +37,7 @@ func main() {
 
 	httpServer := &http.Server{
 		Addr:              ":" + port,
-		Handler:           server.New(db),
+		Handler:           server.New(db, tasks.NewStore(db)),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

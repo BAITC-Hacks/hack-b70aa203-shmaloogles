@@ -20,7 +20,7 @@ func TestHealth(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)
 	recorder := httptest.NewRecorder()
 
-	New(fakeDatabase{}).ServeHTTP(recorder, request)
+	New(fakeDatabase{}, nil).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusOK {
 		t.Fatalf("expected status %d, got %d", http.StatusOK, recorder.Code)
@@ -35,7 +35,7 @@ func TestHealthWhenDatabaseIsUnavailable(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/health", nil)
 	recorder := httptest.NewRecorder()
 
-	New(fakeDatabase{err: errors.New("database unavailable")}).ServeHTTP(recorder, request)
+	New(fakeDatabase{err: errors.New("database unavailable")}, nil).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusServiceUnavailable {
 		t.Fatalf("expected status %d, got %d", http.StatusServiceUnavailable, recorder.Code)
@@ -50,7 +50,7 @@ func TestUnknownRoute(t *testing.T) {
 	request := httptest.NewRequest(http.MethodGet, "/unknown", nil)
 	recorder := httptest.NewRecorder()
 
-	New(fakeDatabase{}).ServeHTTP(recorder, request)
+	New(fakeDatabase{}, nil).ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusNotFound {
 		t.Fatalf("expected status %d, got %d", http.StatusNotFound, recorder.Code)

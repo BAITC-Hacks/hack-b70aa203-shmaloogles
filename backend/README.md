@@ -14,6 +14,9 @@ The server listens on port `8080` by default. Set `PORT` to override it.
 
 - `GET /api` — API availability check
 - `GET /health` — service health check
+- `POST /api/tasks` — create a task draft from an initial description
+- `GET /api/tasks/{id}` — get a task
+- `PUT /api/tasks/{id}` — replace the editable fields of a task card
 
 ## Test
 

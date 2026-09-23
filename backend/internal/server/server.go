@@ -14,10 +14,13 @@ type healthChecker interface {
 	Ping(context.Context) error
 }
 
-func New(database healthChecker) http.Handler {
+func New(database healthChecker, tasks taskStore) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api", apiHandler)
 	mux.HandleFunc("GET /health", healthHandler(database))
+	mux.HandleFunc("POST /api/tasks", createTaskHandler(tasks))
+	mux.HandleFunc("GET /api/tasks/{id}", getTaskHandler(tasks))
+	mux.HandleFunc("PUT /api/tasks/{id}", updateTaskHandler(tasks))
 
 	return mux
 }
