@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/shmaloogles/business-task-platform/backend/internal/ai"
 	"github.com/shmaloogles/business-task-platform/backend/internal/database"
 	"github.com/shmaloogles/business-task-platform/backend/internal/server"
 	"github.com/shmaloogles/business-task-platform/backend/internal/tasks"
@@ -20,6 +21,11 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+	aiService, err := ai.FromEnv()
+	if err != nil {
+		logger.Error("invalid AI configuration", "error", err)
+		os.Exit(1)
 	}
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
@@ -34,10 +40,12 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
+	handler := server.New(db, tasks.NewStore(db))
+	server.RegisterAIRoutes(handler, aiService)
 
 	httpServer := &http.Server{
 		Addr:              ":" + port,
-		Handler:           server.New(db, tasks.NewStore(db)),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
