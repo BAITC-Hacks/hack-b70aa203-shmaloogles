@@ -16,32 +16,52 @@ INSERT INTO tasks (
         'Аналитики и менеджеры продукта.', 'Обезличенная история активности за год.',
         'Нельзя передавать персональные данные.', 'Дашборд с факторами риска.',
         'Выделены минимум три проверяемых фактора.', 'product@example.test', 'Еженедельный созвон.',
-        'published', 94, 'priority', NOW(), NOW()
+        'published', 100, 'priority', NOW(), NOW()
     ),
     (
         'Нужен сервис для заявок на ремонт.', 'Учёт заявок на ремонт', 'automation',
         'Заявки сейчас принимаются в мессенджерах.', 'Собрать заявки в одном интерфейсе.',
         'Сотрудники офиса.', NULL, 'MVP за четыре недели.', 'Рабочий веб-прототип.',
         'Пользователь может создать и отследить заявку.', 'ops@example.test', 'Два созвона в неделю.',
-        'published', 76, 'ready', NOW(), NOW()
+        'published', 80, 'ready', NOW(), NOW()
     ),
     (
         'Хотим уменьшить расход электричества.', 'Мониторинг энергопотребления', 'ecology',
         'Расходы на электричество растут.', 'Показать зоны избыточного потребления.',
         'Инженеры эксплуатации.', 'Показания счётчиков по часам.', NULL,
         'Отчёт и прототип мониторинга.', NULL, 'energy@example.test', 'Асинхронно в почте.',
-        'published', 58, 'workable', NOW(), NOW()
+        'published', 75, 'ready', NOW(), NOW()
     ),
     (
         'Нужно улучшить навигацию.', 'Навигация для посетителей', 'accessibility',
         'Посетители часто не находят нужные кабинеты.', NULL, 'Посетители здания.',
         NULL, NULL, NULL, NULL, 'admin@example.test', NULL,
-        'confirmed', 35, 'draft', NOW(), NULL
+        'confirmed', 25, 'draft', NOW(), NULL
     ),
     (
         'Хотим чат-бота для поддержки.', NULL, 'support', NULL, NULL, NULL,
         NULL, NULL, NULL, NULL, NULL, NULL,
-        'draft', 5, 'draft', NULL, NULL
+        'draft', 0, 'draft', NULL, NULL
+    ),
+    (
+        'Нужно упростить адаптацию новых сотрудников.', 'Онбординг сотрудников', 'education',
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        'draft', 0, 'draft', NULL, NULL
+    ),
+    (
+        'Хотим понять, почему пользователи бросают оформление заказа.', 'Исследование корзины', 'retail',
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        'draft', 0, 'draft', NULL, NULL
+    ),
+    (
+        'Нужен удобный отчёт по обращениям клиентов.', 'Отчёт по поддержке', 'support',
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        'draft', 0, 'draft', NULL, NULL
+    ),
+    (
+        'Хотим автоматизировать сверку ежемесячных платежей.', 'Сверка платежей', 'finance',
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        'draft', 0, 'draft', NULL, NULL
     );
 
 INSERT INTO proposals (task_id, team_id, solution_idea, plan, timeline, prototype_url, status) VALUES

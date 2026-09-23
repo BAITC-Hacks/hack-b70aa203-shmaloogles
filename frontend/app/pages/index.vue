@@ -1,7 +1,8 @@
 <script setup lang="ts">
-const { publishedTasks } = useDemo();
+const { listTasks } = usePlatformApi();
+const { data: publishedTasks } = await useAsyncData('home-tasks', () => listTasks());
 const { setRole } = useRole();
-const featured = computed(() => publishedTasks.value.slice(0, 3));
+const featured = computed(() => (publishedTasks.value || []).slice(0, 3));
 useHead({ title: 'Мост — у больших идей есть начало' });
 </script>
 
@@ -27,7 +28,7 @@ useHead({ title: 'Мост — у больших идей есть начало'
 
     <section class="home-projects">
       <div class="section-heading"><div><span class="eyebrow muted">РЕАЛЬНЫЙ ОПЫТ НАЧИНАЕТСЯ ЗДЕСЬ</span><h2>Задачи со смыслом<span class="heading-dot">.</span></h2><p>Найдите то, во что захочется вложить свои знания.</p></div><NuxtLink to="/catalog" class="text-link">Весь каталог <AppIcon name="arrow" :size="18" /></NuxtLink></div>
-      <div class="demo-caption"><span class="status-dot" />Примеры задач · демонстрационные данные</div>
+      <div class="demo-caption"><span class="status-dot" />Опубликованные задачи</div>
       <div class="task-grid"><TaskCard v-for="task in featured" :key="task.id" :task="task" /></div>
     </section>
 

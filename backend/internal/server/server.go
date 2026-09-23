@@ -25,6 +25,7 @@ func New(database healthChecker, tasks taskStore, teams teamStore, proposals pro
 	mux.HandleFunc("POST /api/tasks/{id}/confirm", confirmTaskHandler(tasks))
 	mux.HandleFunc("POST /api/tasks/{id}/publish", publishTaskHandler(tasks))
 	mux.HandleFunc("GET /api/teams", listTeamsHandler(teams))
+	mux.HandleFunc("GET /api/proposals", listAllProposalsHandler(proposals))
 	mux.HandleFunc("POST /api/tasks/{id}/proposals", createProposalHandler(proposals))
 	mux.HandleFunc("GET /api/tasks/{id}/proposals", listProposalsHandler(proposals))
 	mux.HandleFunc("PATCH /api/proposals/{id}", updateProposalHandler(proposals))

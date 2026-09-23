@@ -50,7 +50,10 @@ func (store *Store) Get(ctx context.Context, id int64) (Task, error) {
 }
 
 func (store *Store) List(ctx context.Context, filter ListFilter) ([]Task, error) {
-	query := `SELECT ` + taskColumns + ` FROM tasks WHERE status = 'published'`
+	query := `SELECT ` + taskColumns + ` FROM tasks WHERE TRUE`
+	if !filter.IncludeAll {
+		query += " AND status = 'published'"
+	}
 	args := make([]any, 0, 2)
 	if filter.Topic != "" {
 		args = append(args, filter.Topic)
@@ -60,7 +63,9 @@ func (store *Store) List(ctx context.Context, filter ListFilter) ([]Task, error)
 		args = append(args, filter.ReadinessLevel)
 		query += fmt.Sprintf(" AND readiness_level = $%d", len(args))
 	}
-	if filter.Sort == "readiness_asc" {
+	if filter.IncludeAll {
+		query += " ORDER BY created_at DESC"
+	} else if filter.Sort == "readiness_asc" {
 		query += " ORDER BY readiness_score ASC, published_at DESC"
 	} else {
 		query += " ORDER BY readiness_score DESC, published_at DESC"

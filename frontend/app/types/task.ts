@@ -1,26 +1,22 @@
-export interface ClarificationQuestion {
-  id: string;
-  question: string;
-  field: string;
-}
+export type TaskStatus = 'draft' | 'confirmed' | 'published';
+export type ProposalStatus = 'pending' | 'accepted' | 'rejected';
 
 export interface TaskCard {
   title: string;
+  topic: string;
   context: string;
-  users: string[];
-  data: string[];
-  constraints: string[];
+  need: string;
+  users: string;
+  data: string;
+  constraints: string;
   expectedResult: string;
-  successCriteria: string[];
+  successCriteria: string;
   contact: string;
+  interactionFormat: string;
 }
 
-export interface ReadinessScore {
-  total: number;
-  level: 'Черновик' | 'Рабочая' | 'Готовая' | 'Приоритетная';
-}
-
-export type TaskStatus = 'draft' | 'published';
+export interface ReadinessBreakdown { name: string; points: number; maxPoints: number }
+export interface ReadinessScore { total: number; level: string }
 
 export interface Task {
   id: string;
@@ -28,19 +24,18 @@ export interface Task {
   card: TaskCard;
   score: ReadinessScore;
   status: TaskStatus;
-  category?: string;
-  organization?: string;
-  tags?: string[];
-  icon?: string;
-  color?: string;
-  isExample?: boolean;
+  breakdown: ReadinessBreakdown[];
+  missingInformation: string[];
+  suggestions: string[];
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type ProposalStatus = 'pending' | 'accepted' | 'rejected';
-
+export interface Team { id: string; name: string; interests: string[]; skills: string[]; technologies: string[] }
 export interface Proposal {
   id: string;
   taskId: string;
+  teamId: string;
   team: string;
   idea: string;
   plan: string;

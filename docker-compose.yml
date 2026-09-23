@@ -1,4 +1,17 @@
 services:
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      NUXT_API_BASE: http://api:8080
+      NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8080}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
   api:
     build:
       context: ./backend
