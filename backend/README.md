@@ -4,6 +4,20 @@ Minimal Go REST API for the Business Task Platform MVP.
 
 ## Run
 
+From the repository root, copy the example environment and start the complete
+backend stack:
+
+```sh
+cp .env.example .env
+docker compose up --build
+```
+
+This starts PostgreSQL on port `5432` and the API on port `8080`. Compose reads
+the root `.env` and passes the database and AI settings to the API container.
+
+To run the API directly instead, export the variables from the root `.env` and
+run:
+
 ```sh
 go run ./cmd/api
 ```
