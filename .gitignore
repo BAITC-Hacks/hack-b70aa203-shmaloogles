@@ -1,0 +1,25 @@
+# Local environment
+.env
+.env.local
+.env.*.local
+
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Go
+bin/
+*.test
+coverage.out
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# Logs
+*.log
