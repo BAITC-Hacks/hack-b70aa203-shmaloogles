@@ -1,0 +1,16 @@
+{
+  "mode": "mock",
+  "card": {
+    "title": null,
+    "topic": null,
+    "context": "Заказы кафе ведём вручную в таблице.",
+    "need": "Сократить ручной ввод заказов",
+    "users": "Администраторы кафе",
+    "data": null,
+    "constraints": null,
+    "expected_result": "Прототип формы заказа",
+    "success_criteria": "Оформление тестового заказа за 1 минуту",
+    "contact": null,
+    "interaction_format": null
+  }
+}
