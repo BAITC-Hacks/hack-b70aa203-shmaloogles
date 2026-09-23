@@ -9,6 +9,44 @@ MVP-платформа для взаимодействия бизнеса и с�
 
 Студенческие команды могут просматривать опубликованные задачи и предлагать свои решения. Бизнес самостоятельно выбирает подходящее предложение.
 
+## Быстрый запуск
+
+Требуется Docker Desktop или Docker Engine с Compose.
+
+```sh
+cp .env.example .env
+docker compose up --build
+```
+
+По умолчанию AI работает в детерминированном mock-режиме. Для реального OpenAI
+добавьте в локальный `.env`:
+
+```env
+AI_MODE=openai
+OPENAI_API_KEY=your-key
+AI_MODEL=gpt-4.1-mini
+```
+
+После запуска доступны:
+
+* API: `http://localhost:8080`;
+* healthcheck: `http://localhost:8080/health`;
+* PostgreSQL: `localhost:5432`.
+
+Остановить сервисы:
+
+```sh
+docker compose down
+```
+
+Удалить локальные данные PostgreSQL и заново применить миграции и seed:
+
+```sh
+docker compose down -v
+```
+
+Файл `.env` содержит локальные настройки и секреты, поэтому не добавляется в Git.
+
 ## Основной сценарий
 
 ```text
@@ -137,7 +175,10 @@ LLM API используется для анализа первоначальн�
 ├── frontend/       # Next.js frontend
 ├── backend/        # Go REST API
 ├── docs/
-│   └── MVP.md      # требования к MVP
+│   ├── ARCHITECTURE.md
+│   └── SPEC.md
+├── docker-compose.yml
+├── .env.example
 ├── AGENTS.md       # инструкции для coding agents
 └── README.md
 ```
