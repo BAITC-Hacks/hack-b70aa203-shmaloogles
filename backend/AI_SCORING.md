@@ -137,7 +137,25 @@ JSON Schema формируется в `validation.go` и передаётся п
 подключить подтверждение и сохранение результата скоринга; frontend — AI-маршруты.
 HTTP-тест проходит уточнение → генерацию с оценкой → передачу карточки в PUT
 с хранилищем в памяти. PostgreSQL этим тестом не проверяется.
-Сквозная работа всего MVP здесь не заявляется.
+Дополнительный `TestAIFlowPostgres` проверяет те же маршруты живыми HTTP-запросами
+с реальной PostgreSQL: создание черновика, запись/чтение карточки, сохранение `null`
+после редактирования и расчёт из прочитанных данных. Он удаляет только созданную
+им запись и пропускается без `AI_TEST_DATABASE_URL`. Запуск на отдельной тестовой БД:
+
+```sh
+# Из корня; отдельный compose-проект и том, используются миграция и seed напарника.
+docker compose --env-file .env.example -p hackalem-ai-check up -d --wait postgres
+cd backend
+AI_TEST_DATABASE_URL='postgres://shmaloogles:shmaloogles@localhost:5432/shmaloogles?sslmode=disable' \
+  go test ./internal/server -run '^TestAIFlowPostgres$' -v -count=1
+cd ..
+docker compose --env-file .env.example -p hackalem-ai-check down
+```
+
+Порт 5432 должен быть свободен (либо задайте другой `POSTGRES_PORT` и DSN).
+`down` сохраняет тестовый том. Этот тест пройден на PostgreSQL 16 из compose.
+Подтверждение, публикация и отклики ещё не проверяются: сквозная работа всего MVP
+здесь не заявляется. Реальная модель не вызывается, используется явный mock.
 
 В `db/seed.sql` напарника баллы пока заданы вручную: 94/76/58/35/5.
 По текущей формуле для этих же карточек получится 100/80/75/25/0; третья карточка
