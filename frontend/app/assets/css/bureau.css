@@ -125,3 +125,37 @@ h1, h2, h3, p, a, dd { overflow-wrap: anywhere; }
 @media (max-width: 1199px) { .task-registry { --register-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(180px, .85fr); } .task-registry-row, .registry-columns { column-gap: 20px; padding-left: 16px; padding-right: 16px; } }
 @media (max-width: 1000px) { .registry-columns { display: none; } .task-registry-row { grid-template-columns: minmax(0, 1fr) 210px; gap: 0 24px; border-top: 2px solid #bdcfe7; margin-bottom: 16px; } .task-registry-row .task-description { grid-row: 3; } .task-registry-row .task-result { grid-column: 1; grid-row: 4; padding-top: 16px; } .task-registry-row .task-result > span { display: block; margin-bottom: 5px; } .task-registry-row > .readiness { grid-column: 2; grid-row: 1 / 4; } .task-registry-row .task-card-footer { grid-column: 2; grid-row: 4; align-self: end; } }
 @media (max-width: 575px) { .task-registry-row { display: flex; padding: 22px; } .task-registry-row .task-result { margin-bottom: 24px; } .task-registry-row .task-card-footer { align-self: stretch; } .project-document { padding: 24px 20px; } .document-section legend { font-size: 20px; } .document-section legend > span { font-size: 15px; } }
+/* The overview pairs the original bridge motif with a real project brief. */
+.hero-bridge-edition { grid-template-columns: 1fr 1.1fr; gap: 44px; padding: 24px 30px; background: #edf4ff; border-top-width: 1px; }
+.hero-bridge-edition h1 { font-size: clamp(34px, 3vw, 44px); line-height: 1.12; margin: 18px 0; }
+.hero-bridge-edition .hero-copy > p { max-width: 365px; }
+.bridge-study { min-width: 0; padding-left: 28px; border-left: 1px solid #c4d5ee; }
+.bridge-study-heading { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 12px; margin-bottom: 8px; }
+.bridge-study-index { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--blue-dark); white-space: nowrap; }
+.bridge-study-title { display: block; font-size: 18px; font-weight: 700; line-height: 1.4; }
+.bridge-study-title:hover { color: var(--blue-dark); }
+.bridge-drawing { width: 100%; height: 116px; color: var(--blue); margin: 8px 0 10px; }
+.bridge-endpoints { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px; }
+.bridge-endpoints > div { min-width: 0; }
+.bridge-endpoints > div > span { display: block; font-size: 12px; color: var(--blue-dark); margin-bottom: 5px; font-weight: 650; }
+.bridge-endpoints p { font-size: 13px; line-height: 1.55; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bridge-study .readiness { border-top: 1px solid #c4d5ee; padding-top: 12px; }
+.bridge-study .weighted-segment { background: #ceddf1; }
+.bridge-study .weighted-track { margin-top: 10px; }
+@media (max-width: 1199px) { .hero-bridge-edition { gap: 24px; padding: 24px; } .bridge-study { padding-left: 22px; } .bridge-study-index { display: none; } .hero-bridge-edition h1 { font-size: 33px; } }
+@media (min-width: 768px) and (max-width: 1000px) { .hero-bridge-edition { grid-template-columns: 1fr; } .hero-title-break { display: none; } .bridge-study { padding: 20px 0 0; border-left: 0; border-top: 1px solid #c4d5ee; } .bridge-drawing { height: 90px; } .hero-bridge-edition .hero-copy > p { max-width: none; } }
+@media (max-width: 767px) { .hero-bridge-edition { display: grid; grid-template-columns: 1fr; gap: 24px; } .hero-title-break { display: none; } .hero-bridge-edition h1 { font-size: 34px; } .bridge-study { border-left: 0; padding: 20px 0 0; border-top: 1px solid #c4d5ee; } .bridge-drawing { height: 90px; } }
+@media (max-width: 575px) { .hero-bridge-edition { padding: 24px 20px; } .hero-bridge-edition h1 { font-size: 32px; } .bridge-endpoints { gap: 16px; } .bridge-study-title { font-size: 17px; } }
+@media (max-width: 1000px) {
+  .bridge-study { display: grid; grid-template-columns: minmax(0, 1fr) 90px; gap: 8px 12px; }
+  .bridge-study-heading { grid-column: 1; margin: 0; }
+  .bridge-study-title { grid-column: 1; }
+  .bridge-drawing { grid-column: 2; grid-row: 1 / 3; height: 60px; margin: 0; align-self: center; }
+  .bridge-endpoints { display: none; }
+  .bridge-study .readiness, .bridge-study > .text-link { grid-column: 1 / -1; }
+  .bridge-study .readiness { margin-top: 4px; }
+}
+@media (max-width: 575px) {
+  .hero-bridge-edition .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hero-bridge-edition .hero-actions .button { font-size: 12px; padding: 10px 8px; gap: 6px; }
+}

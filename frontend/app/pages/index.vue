@@ -8,10 +8,10 @@ useHead({ title: 'Мост — задачи бизнеса и студенчес
 
 <template>
   <div class="page home-page">
-    <section class="hero">
+    <section class="hero hero-bridge-edition">
       <div class="hero-copy">
         <span class="eyebrow">БИЗНЕС × СТУДЕНЧЕСКИЕ КОМАНДЫ</span>
-        <h1>Задачи бизнеса.<br><span>Работа для команд.</span></h1>
+        <h1>Задачи бизнеса.<br><span>Возможности<br class="hero-title-break"> для команд.</span></h1>
         <p>Опишите проблему и ожидаемый результат. Команды предложат решение, план и сроки.</p>
         <div class="hero-actions"><NuxtLink to="/tasks/new" class="button button-primary" @click="setRole('business')">Создать задачу <AppIcon name="plus" :size="18" /></NuxtLink><NuxtLink to="/catalog" class="button button-white" @click="setRole('team')">Выбрать проект <AppIcon name="arrow" :size="18" /></NuxtLink></div>
       </div>
