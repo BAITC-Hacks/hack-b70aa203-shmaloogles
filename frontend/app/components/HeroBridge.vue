@@ -1,3 +1,6 @@
+<script setup lang="ts">
+const { t } = useLocale();
+</script>
 <template>
   <div class="hero-art" aria-hidden="true">
     <div class="art-orbit orbit-one" /><div class="art-orbit orbit-two" />
@@ -23,9 +26,9 @@
       <path d="m365 83 4 12 12 4-12 4-4 12-4-12-12-4 12-4 4-12Z" fill="#78A9F8" />
       <path d="m119 96 3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z" fill="#A8CBFF" />
     </svg>
-    <div class="art-note business-note"><span class="art-note-icon"><AppIcon name="briefcase" :size="21" /></span><div><small>ЕСТЬ ЗАДАЧА</small><strong>Идея бизнеса</strong></div><span class="art-note-dot" /></div>
-    <div class="art-note team-note"><span class="art-note-icon"><AppIcon name="users" :size="21" /></span><div><small>ЕСТЬ РЕШЕНИЕ</small><strong>Энергия команды</strong></div></div>
-    <div class="art-match"><span><AppIcon name="check" :size="13" /></span>Вместе — больше</div>
+    <div class="art-note business-note"><span class="art-note-icon"><AppIcon name="briefcase" :size="21" /></span><div><small>{{ t("ЕСТЬ ЗАДАЧА") }}</small><strong>{{ t("Идея бизнеса") }}</strong></div><span class="art-note-dot" /></div>
+    <div class="art-note team-note"><span class="art-note-icon"><AppIcon name="users" :size="21" /></span><div><small>{{ t("ЕСТЬ РЕШЕНИЕ") }}</small><strong>{{ t("Энергия команды") }}</strong></div></div>
+    <div class="art-match"><span><AppIcon name="check" :size="13" /></span>{{ t("Вместе — больше") }}</div>
     <span class="art-coordinate coordinate-left">55° IDEAS</span><span class="art-coordinate coordinate-right">71° OPPORTUNITIES</span>
   </div>
 </template>

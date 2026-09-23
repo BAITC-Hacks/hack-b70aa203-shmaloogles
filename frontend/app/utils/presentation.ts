@@ -25,9 +25,11 @@ const fallback = (value: string) => value
   .replace(/^./, letter => letter.toLocaleUpperCase('ru-RU'));
 
 export const presentationLabel = (value?: string | null, empty = 'Не указано') => {
-  if (!value?.trim()) return empty;
+  const { t } = useLocale();
+  if (!value?.trim()) return t(empty);
   const key = value.trim();
-  return labels[key] ?? labels[key.toLowerCase()] ?? fallback(key);
+  const label = labels[key] ?? labels[key.toLowerCase()];
+  return label ? t(label) : fallback(key);
 };
 
 export const taskStatusLabel = (value: string) => presentationLabel(value);
