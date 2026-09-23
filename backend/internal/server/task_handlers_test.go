@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/shmaloogles/business-task-platform/backend/internal/scoring"
 	"github.com/shmaloogles/business-task-platform/backend/internal/tasks"
 )
 
@@ -26,7 +27,15 @@ func (store *fakeTaskStore) Get(context.Context, int64) (tasks.Task, error) {
 	return store.task, store.err
 }
 
-func (store *fakeTaskStore) Update(context.Context, int64, tasks.UpdateInput) (tasks.Task, error) {
+func (store *fakeTaskStore) Update(context.Context, int64, tasks.UpdateInput, scoring.Result) (tasks.Task, error) {
+	return store.task, store.err
+}
+
+func (store *fakeTaskStore) Confirm(context.Context, int64, scoring.Result) (tasks.Task, error) {
+	return store.task, store.err
+}
+
+func (store *fakeTaskStore) Publish(context.Context, int64) (tasks.Task, error) {
 	return store.task, store.err
 }
 
@@ -105,5 +114,29 @@ func TestGetTaskInternalError(t *testing.T) {
 
 	if recorder.Code != http.StatusInternalServerError {
 		t.Fatalf("expected status %d, got %d", http.StatusInternalServerError, recorder.Code)
+	}
+}
+
+func TestConfirmTaskRejectsPublishedTask(t *testing.T) {
+	store := &fakeTaskStore{task: tasks.Task{ID: 1, Status: "published"}}
+	request := httptest.NewRequest(http.MethodPost, "/api/tasks/1/confirm", nil)
+	recorder := httptest.NewRecorder()
+
+	New(fakeDatabase{}, store).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusConflict {
+		t.Fatalf("expected status %d, got %d", http.StatusConflict, recorder.Code)
+	}
+}
+
+func TestPublishTaskRequiresConfirmation(t *testing.T) {
+	store := &fakeTaskStore{task: tasks.Task{ID: 1, Status: "draft"}}
+	request := httptest.NewRequest(http.MethodPost, "/api/tasks/1/publish", nil)
+	recorder := httptest.NewRecorder()
+
+	New(fakeDatabase{}, store).ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusConflict {
+		t.Fatalf("expected status %d, got %d", http.StatusConflict, recorder.Code)
 	}
 }

@@ -21,6 +21,8 @@ func New(database healthChecker, tasks taskStore) http.Handler {
 	mux.HandleFunc("POST /api/tasks", createTaskHandler(tasks))
 	mux.HandleFunc("GET /api/tasks/{id}", getTaskHandler(tasks))
 	mux.HandleFunc("PUT /api/tasks/{id}", updateTaskHandler(tasks))
+	mux.HandleFunc("POST /api/tasks/{id}/confirm", confirmTaskHandler(tasks))
+	mux.HandleFunc("POST /api/tasks/{id}/publish", publishTaskHandler(tasks))
 
 	return mux
 }
