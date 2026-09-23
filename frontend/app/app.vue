@@ -49,7 +49,7 @@ onMounted(() => {
     <aside id="main-navigation" ref="navigation" class="sidebar" :class="{ 'is-open': menuOpen }" @keydown="trapMenuFocus">
       <NuxtLink to="/" class="brand" aria-label="Мост — на главную"><BrandMark /><span>мост<span class="brand-dot">.</span></span></NuxtLink>
       <button v-if="menuOpen" class="icon-button sidebar-close" aria-label="Закрыть навигацию" @click="menuOpen = false"><AppIcon name="close" :size="18" /></button>
-      <div class="sidebar-caption">Идеи встречают возможности</div>
+      <div class="sidebar-caption">Бизнес и студенческие команды</div>
       <div class="nav-label">ПЛАТФОРМА</div>
       <nav class="main-nav" aria-label="Основная навигация">
         <NuxtLink to="/" class="nav-link" exact-active-class="is-active"><AppIcon name="grid" /><span>Обзор</span></NuxtLink>
@@ -60,9 +60,9 @@ onMounted(() => {
       <NuxtLink :to="role === 'business' ? '/tasks/new' : '/catalog'" class="button button-primary sidebar-create"><AppIcon :name="role === 'business' ? 'plus' : 'search'" />{{ role === 'business' ? 'Создать задачу' : 'Найти задачу' }}</NuxtLink>
       <div class="sidebar-bottom">
         <div class="sidebar-help">
-          <span class="help-spark"><AppIcon name="sparkles" :size="23" /></span>
-          <h3>У больших идей<br>есть начало.</h3>
-          <p>Расскажите о задаче.<br>Всё остальное — по шагам.</p>
+
+          <h3>Как начать проект</h3>
+          <p>Описание → уточнение →<br>предложение команды.</p>
           <NuxtLink to="/#how-it-works">Как работает Мост <AppIcon name="arrow" :size="17" /></NuxtLink>
         </div>
         <div class="sidebar-status"><span class="status-dot" />Демо-пространство <span class="version">v.01</span></div>
@@ -78,7 +78,7 @@ onMounted(() => {
         <div class="topbar-right"><span class="role-caption">Я здесь как</span><RoleSwitcher /><span class="profile-avatar" :aria-label="role === 'business' ? 'Роль: бизнес' : 'Роль: команда'">{{ role === 'business' ? 'Б' : 'К' }}<span /></span></div>
       </header>
       <main id="main-content" class="main-content" tabindex="-1"><NuxtPage /></main>
-      <footer class="footer"><span>Мост<span class="brand-dot">.</span> Соединяем, чтобы создавать.</span><span>Сделано для идей с будущим <AppIcon name="sparkles" :size="14" /></span></footer>
+      <footer class="footer"><span>Мост<span class="brand-dot">.</span> Задачи бизнеса. Работа команд.</span><span>Проект начинается с понятной задачи</span></footer>
     </div>
   </div>
 </template>
