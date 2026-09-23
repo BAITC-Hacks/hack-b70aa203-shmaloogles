@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/shmaloogles/business-task-platform/backend/internal/database"
 	"github.com/shmaloogles/business-task-platform/backend/internal/server"
 )
 
@@ -19,10 +20,23 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		databaseURL = "postgres://shmaloogles:shmaloogles@localhost:5432/shmaloogles?sslmode=disable"
+	}
+
+	connectContext, cancelConnect := context.WithTimeout(context.Background(), 5*time.Second)
+	db, err := database.Open(connectContext, databaseURL)
+	cancelConnect()
+	if err != nil {
+		logger.Error("could not connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
 
 	httpServer := &http.Server{
 		Addr:              ":" + port,
-		Handler:           server.New(),
+		Handler:           server.New(db),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

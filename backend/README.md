@@ -35,9 +35,9 @@ The default connection string is:
 postgres://shmaloogles:shmaloogles@localhost:5432/shmaloogles?sslmode=disable
 ```
 
-Copy `.env.example` to `.env` to override the local defaults. The schema in
-`backend/db/schema.sql` is applied automatically when the database volume is
-created for the first time.
+Copy `.env.example` to `.env` to override the local defaults. The initial
+migration and demo seed data in `backend/db` are applied automatically when the
+database volume is created for the first time.
 
 To stop the database:
 
