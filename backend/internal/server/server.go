@@ -14,7 +14,7 @@ type healthChecker interface {
 	Ping(context.Context) error
 }
 
-func New(database healthChecker, tasks taskStore, teams teamStore) http.Handler {
+func New(database healthChecker, tasks taskStore, teams teamStore) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api", apiHandler)
 	mux.HandleFunc("GET /health", healthHandler(database))

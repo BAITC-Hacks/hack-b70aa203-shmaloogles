@@ -44,6 +44,7 @@ type ListFilter struct {
 	Sort           string
 }
 
+// UpdateInput shares the AI/scoring contract without changing the CRUD JSON shape.
 type UpdateInput = taskcard.Card
 
 func (task Task) Card() taskcard.Card {

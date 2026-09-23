@@ -5,12 +5,14 @@
 `context`, `need`, `users`, `data`, `constraints`, `expected_result`,
 `success_criteria`, `contact`, `interaction_format`. Это вход/выход AI и скоринга,
 не модель БД: ID, статус, подтверждение и сохранение принадлежат основному API.
-Другой модели карточки в репозитории на момент реализации не было.
+После интеграции `codex/backend-foundation` тип `tasks.UpdateInput` стал алиасом
+`taskcard.Card`: сгенерированная карточка подходит прямо для `Store.Update`.
+`tasks.Task.Card()` извлекает эти же поля из сохранённой задачи.
 
 ## Вызовы из основного API
 
-При старте один раз вызвать `service, err := ai.FromEnv()` и проверить ошибку.
-Сервис можно использовать из нескольких обработчиков одновременно.
+`cmd/api` уже создаёт сервис через `ai.FromEnv()` и подключает маршруты вызовом
+`server.RegisterAIRoutes(mux, service)`. Сервис используется конкурентно.
 
 ```go
 // В POST /api/tasks/clarify: JSON {"description":"..."}.
@@ -23,19 +25,34 @@ result, err := service.Generate(r.Context(), ai.GenerateInput{
     Answers: []ai.Answer{{Field: "need", Answer: "Сократить ручной ввод"}},
 })
 // result: {"card":{...}, "mode":"...", "fallback_reason":"..." (при fallback)}
+// HTTP-обработчик добавляет readiness: scoring.Calculate(result.Card).
 
 // Предварительная оценка для редактируемой карточки:
 preview := scoring.Calculate(result.Card)
-// После ручного подтверждения изменений основной API повторяет Calculate
-// на фактически подтверждённой карточке и сохраняет результат вместе с ней.
+// Основной API при PUT передаёт Calculate(input) в Store.Update,
+// при подтверждении — Calculate(task.Card()) в Store.Confirm.
+// Task.RecalculateReadiness() доступен для расчёта полей модели в памяти.
 ```
 
 Импорты: `github.com/shmaloogles/business-task-platform/backend/internal/ai`,
 `.../internal/scoring`, `.../internal/taskcard`.
 Методы не сохраняют карточку, не подтверждают и не публикуют её.
-Маршруты пока не подключены: отдельные HTTP-обработчики не нужны для этих пакетов.
-Основному API нужно декодировать и проверить HTTP-вход, ограничить тело запроса,
-вызвать методы и вернуть JSON. Не продолжать обработку результата при `err != nil`.
+Маршруты `POST /api/tasks/clarify` и `POST /api/tasks/generate` уже подключены.
+Они проверяют входной JSON и ограничивают тело 1 МиБ, не обращаются к БД.
+Генерация возвращает `{card, mode, fallback_reason?, readiness}`; `readiness`
+содержит предварительный результат `scoring.Calculate`. Передать `card` без оболочки
+в существующий `PUT /api/tasks/{id}`, чтобы сохранить редактируемые поля черновика.
+PUT сохраняет карточку и пересчитанный readiness вместе. Подтверждение выполняется
+через `POST /api/tasks/{id}/confirm`, публикация — `/api/tasks/{id}/publish`.
+До подтверждения оценка предварительная. Сохранение вопросов/ответов в
+`clarification` пока не реализовано основным API.
+
+`Task.RecalculateReadiness()` заполняет в памяти `readiness_score` (int16),
+`readiness_level` (строчные `draft/workable/ready/priority`, как требует БД),
+`readiness_breakdown` (JSON-массив категорий), `missing_information` (строки полей),
+`suggestions` (тексты подсказок). Исходный `scoring.Result` сохраняет уровни
+`Draft/Workable/Ready/Priority` и подсказки `{field,text}`. Это преобразование
+на границе модели хранения; схема БД не менялась. Функция не меняет статус и даты.
 
 Ошибки проверять через `errors.Is`: `ai.ErrInput` → 400,
 `ai.ErrResponse`/`ai.ErrProvider` → 502, `context.DeadlineExceeded` → 504.
@@ -50,18 +67,30 @@ preview := scoring.Calculate(result.Card)
 ответы в соответствующие поля, остальные оставляет `null`. Она не анализирует смысл
 описания и может повторно спросить об уже упомянутом факте. Не показывать её как LLM.
 
-Реальный провайдер — изолированный REST-клиент Gemini, без SDK и новых зависимостей.
-Контракт сверялся с [официальным generateContent API](https://ai.google.dev/api/generate-content).
+Реальный провайдер — изолированный клиент OpenAI Responses API, без SDK и новых
+зависимостей. Используется [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
+с `text.format.type=json_schema` и `strict=true`. По умолчанию —
+[`gpt-4.1-mini`](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
+Предыдущий Gemini-клиент заменён: `AI_MODE=gemini` больше не поддерживается.
 Переменные окружения:
 
 | Переменная | Значение |
 | --- | --- |
-| `AI_MODE` | `mock` (по умолчанию) или `gemini` |
-| `AI_API_KEY` | Ключ, обязателен в режиме `gemini`; хранить только в окружении |
-| `AI_MODEL` | Доступный вашему аккаунту ID модели с поддержкой JSON Schema; обязателен |
-| `AI_BASE_URL` | По умолчанию `https://generativelanguage.googleapis.com/v1beta` |
+| `AI_MODE` | `mock` (по умолчанию) или `openai` |
+| `OPENAI_API_KEY` | Ключ, обязателен в режиме `openai`; хранить только в окружении backend |
+| `AI_MODEL` | По умолчанию `gpt-4.1-mini`; можно указать доступную модель с JSON Schema |
+| `AI_BASE_URL` | По умолчанию `https://api.openai.com/v1` |
 | `AI_TIMEOUT` | Go duration, например `20s` (по умолчанию) |
 | `AI_FALLBACK` | `false` по умолчанию; `true` включает заглушку при сбое реального AI |
+
+Для включения экспортируйте `AI_MODE=openai`, `OPENAI_API_KEY` и при необходимости
+`AI_MODEL` перед `go run ./cmd/api`. `.env` автоматически Go-приложением не читается;
+одного изменения файла недостаточно. Ключ не передаётся frontend и не коммитится.
+`AI_API_KEY` заменён на стандартное имя `OPENAI_API_KEY`.
+Ответ ограничен 4096 токенами, автоматических повторов нет. Запросы отправляются
+с `store=false`. Отказы модели, незавершённые ответы и ошибки 401/429/5xx обрабатываются
+через существующий контракт ошибок/fallback. Лимит токенов не является лимитом расходов
+аккаунта; остаток предоставленного бюджета $50 код не проверяет.
 
 Fallback возвращает `mode: fallback` и причину `timeout`, `provider_error` или
 `invalid_response`. UI должен явно показать переход на заглушку. Ошибка конфигурации
@@ -118,9 +147,40 @@ JSON Schema формируется в `validation.go` и передаётся п
 Пример `clarify-output.json` — образец ожидаемого ответа реального режима,
 проверяемый подставным провайдером, а не запись живого вызова модели.
 
-Реальный вызов платного/внешнего API без ключа не проверен. Основной API и frontend
-должны ещё подключить методы; сквозная работа всего MVP здесь не заявляется.
-`docs/MVP.md`, указанный в AGENTS.md, отсутствует: использованы локальное исходное
+Реальный вызов платного/внешнего API без ключа не проверен. Основной API уже сохраняет
+скоринг и поддерживает подтверждение/публикацию; frontend должен подключить AI-маршруты.
+HTTP-тест проходит уточнение → генерацию с оценкой → передачу карточки в PUT
+с хранилищем в памяти. PostgreSQL этим тестом не проверяется.
+Дополнительный `TestAIFlowPostgres` проверяет те же маршруты живыми HTTP-запросами
+с реальной PostgreSQL: создание черновика, запись/чтение карточки и балла, сохранение
+`null` после редактирования, подтверждение, публикацию и появление в каталоге.
+Публикация без подтверждения отклоняется. Он удаляет только созданную
+им запись и пропускается без `AI_TEST_DATABASE_URL`. Запуск на отдельной тестовой БД:
+
+```sh
+# Из корня; отдельный compose-проект и том, используются миграция и seed напарника.
+docker compose --env-file .env.example -p hackalem-ai-check up -d --wait postgres
+cd backend
+AI_TEST_DATABASE_URL='postgres://shmaloogles:shmaloogles@localhost:5432/shmaloogles?sslmode=disable' \
+  go test ./internal/server -run '^TestAIFlowPostgres$' -v -count=1
+cd ..
+docker compose --env-file .env.example -p hackalem-ai-check down
+```
+
+Порт 5432 должен быть свободен (либо задайте другой `POSTGRES_PORT` и DSN).
+`down` сохраняет тестовый том. Этот тест пройден на PostgreSQL 16 из compose.
+Отклики и frontend ещё не проверяются: сквозная работа всего MVP здесь не заявляется.
+Реальная модель не вызывается, используется явный mock.
+
+В `db/seed.sql` напарника баллы пока заданы вручную: 94/76/58/35/5.
+По текущей формуле для этих же карточек получится 100/80/75/25/0; третья карточка
+станет `ready`. Перед демонстрацией нужно пересчитать seed и его breakdown/подсказки
+в основном API либо согласовать обновление seed. В рамках AI схема и seed не менялись.
+В `origin/frontend-layout` пока Nuxt/Vue вместо указанного в документации Next.js;
+типы также отличаются (массивы, camelCase, отсутствуют некоторые поля).
+Frontend должен принять фактический REST-контракт или преобразовать его в UI;
+его код в этой ветке не менялся.
+`docs/MVP.md`, указанный в AGENTS.md, отсутствует: использованы локальное исходноеж
 `ТЗ` и `docs/SPEC.md`. Баллы командам за прогресс упомянуты в исходном сценарии,
 но исключены из текущего scope; в эту часть не входят. Баллы задачи после
 подтверждения из исходного ТЗ учтены разделением предварительной оценки и сохранения.

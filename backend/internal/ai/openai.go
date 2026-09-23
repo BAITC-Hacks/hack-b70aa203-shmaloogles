@@ -16,9 +16,10 @@ import (
 	"time"
 )
 
-type gemini struct {
+type openAI struct {
 	endpoint string
 	key      string
+	model    string
 	client   *http.Client
 }
 
@@ -28,16 +29,19 @@ func FromEnv() (*Service, error) {
 	if mode == "" || mode == "mock" {
 		return New(nil, 0, false), nil
 	}
-	if mode != "gemini" {
-		return nil, fmt.Errorf("AI_MODE must be mock or gemini")
+	if mode != "openai" {
+		return nil, fmt.Errorf("AI_MODE must be mock or openai")
 	}
-	key, model := strings.TrimSpace(os.Getenv("AI_API_KEY")), strings.TrimSpace(os.Getenv("AI_MODEL"))
+	key, model := strings.TrimSpace(os.Getenv("OPENAI_API_KEY")), strings.TrimSpace(os.Getenv("AI_MODEL"))
+	if model == "" {
+		model = "gpt-4.1-mini"
+	}
 	if key == "" || !regexp.MustCompile(`^[a-zA-Z0-9._-]+$`).MatchString(model) {
-		return nil, fmt.Errorf("gemini requires AI_API_KEY and a valid AI_MODEL")
+		return nil, fmt.Errorf("openai requires OPENAI_API_KEY and a valid AI_MODEL")
 	}
 	base := strings.TrimRight(os.Getenv("AI_BASE_URL"), "/")
 	if base == "" {
-		base = "https://generativelanguage.googleapis.com/v1beta"
+		base = "https://api.openai.com/v1"
 	}
 	u, err := url.Parse(base)
 	if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
@@ -58,14 +62,19 @@ func FromEnv() (*Service, error) {
 		}
 	}
 	client := &http.Client{Timeout: timeout, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
-	return New(&gemini{endpoint: base + "/models/" + model + ":generateContent", key: key, client: client}, timeout, fallback), nil
+	return New(&openAI{endpoint: base + "/responses", key: key, model: model, client: client}, timeout, fallback), nil
 }
 
-func (g *gemini) Complete(ctx context.Context, prompt string, input, schema json.RawMessage) ([]byte, error) {
+func (g *openAI) Complete(ctx context.Context, prompt string, input, schema json.RawMessage) ([]byte, error) {
 	body, err := json.Marshal(map[string]any{
-		"systemInstruction": map[string]any{"parts": []any{map[string]any{"text": prompt}}},
-		"contents":          []any{map[string]any{"role": "user", "parts": []any{map[string]any{"text": string(input)}}}},
-		"generationConfig":  map[string]any{"responseMimeType": "application/json", "responseJsonSchema": schema},
+		"model":             g.model,
+		"instructions":      prompt,
+		"input":             string(input),
+		"store":             false,
+		"max_output_tokens": 4096,
+		"text": map[string]any{"format": map[string]any{
+			"type": "json_schema", "name": "task_response", "strict": true, "schema": schema,
+		}},
 	})
 	if err != nil {
 		return nil, ErrProvider
@@ -75,7 +84,7 @@ func (g *gemini) Complete(ctx context.Context, prompt string, input, schema json
 		return nil, ErrProvider
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-goog-api-key", g.key)
+	req.Header.Set("Authorization", "Bearer "+g.key)
 	resp, err := g.client.Do(req)
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
@@ -96,30 +105,39 @@ func (g *gemini) Complete(ctx context.Context, prompt string, input, schema json
 		return nil, ErrResponse
 	}
 	var envelope struct {
-		Candidates []struct {
-			Content struct {
-				Parts []struct {
-					Text    string `json:"text"`
-					Thought bool   `json:"thought"`
-				} `json:"parts"`
+		Status string `json:"status"`
+		Output []struct {
+			Type    string `json:"type"`
+			Status  string `json:"status"`
+			Role    string `json:"role"`
+			Content []struct {
+				Type string `json:"type"`
+				Text string `json:"text"`
 			} `json:"content"`
-			FinishReason string `json:"finishReason"`
-		} `json:"candidates"`
+		} `json:"output"`
 	}
-	if json.Unmarshal(raw, &envelope) != nil || len(envelope.Candidates) != 1 {
-		return nil, ErrResponse
-	}
-	candidate := envelope.Candidates[0]
-	if candidate.FinishReason != "STOP" {
+	if json.Unmarshal(raw, &envelope) != nil || envelope.Status != "completed" {
 		return nil, ErrResponse
 	}
 	var output strings.Builder
-	for _, part := range candidate.Content.Parts {
-		if !part.Thought {
+	messages := 0
+	for _, item := range envelope.Output {
+		if item.Type == "reasoning" {
+			continue
+		}
+		if item.Type != "message" || item.Status != "completed" || item.Role != "assistant" {
+			return nil, ErrResponse
+		}
+		messages++
+		for _, part := range item.Content {
+			// Refusals and unexpected content are never accepted as task data.
+			if part.Type != "output_text" {
+				return nil, ErrResponse
+			}
 			output.WriteString(part.Text)
 		}
 	}
-	if output.Len() == 0 {
+	if messages != 1 || output.Len() == 0 {
 		return nil, ErrResponse
 	}
 	return []byte(output.String()), nil
