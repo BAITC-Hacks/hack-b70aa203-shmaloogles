@@ -1,0 +1,9 @@
+{
+  "description": "Заказы кафе ведём вручную в таблице.",
+  "answers": [
+    {"field": "need", "answer": "Сократить ручной ввод заказов"},
+    {"field": "users", "answer": "Администраторы кафе"},
+    {"field": "expected_result", "answer": "Прототип формы заказа"},
+    {"field": "success_criteria", "answer": "Оформление тестового заказа за 1 минуту"}
+  ]
+}
