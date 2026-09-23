@@ -26,6 +26,8 @@ The server listens on port `8080` by default. Set `PORT` to override it.
 
 ## Endpoints
 
+Frontend integration: [API contract and complete flow](API.md).
+
 - `GET /api` — API availability check
 - `GET /health` — service health check
 - `POST /api/tasks` — create a task draft from an initial description
@@ -57,6 +59,17 @@ Export AI variables into the API process environment; Go does not load `.env` it
 ```sh
 go test ./...
 ```
+
+PostgreSQL integration tests are opt-in. Use a migrated disposable test database:
+
+```sh
+AI_TEST_DATABASE_URL='postgres://shmaloogles:shmaloogles@localhost:5432/shmaloogles?sslmode=disable' go test ./... -count=1
+```
+
+These tests create and remove their own fixtures. The HTTP flow test covers mock AI,
+card persistence/editing, confirmation, publication, catalog, proposals and independent
+accept/reject decisions, including publication and proposals at zero readiness.
+It uses mock AI explicitly: no API key or paid model requests are needed.
 
 ## Database
 

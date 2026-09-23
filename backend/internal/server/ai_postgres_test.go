@@ -15,11 +15,12 @@ import (
 
 	"github.com/shmaloogles/business-task-platform/backend/internal/ai"
 	"github.com/shmaloogles/business-task-platform/backend/internal/database"
+	"github.com/shmaloogles/business-task-platform/backend/internal/proposals"
 	"github.com/shmaloogles/business-task-platform/backend/internal/scoring"
 	"github.com/shmaloogles/business-task-platform/backend/internal/tasks"
 )
 
-// Opt-in integration test. Requires the existing migration; deletes only its own row.
+// Opt-in integration test. Requires the existing migration; deletes only its own fixtures.
 func TestAIFlowPostgres(t *testing.T) {
 	dsn := os.Getenv("AI_TEST_DATABASE_URL")
 	if dsn == "" {
@@ -32,7 +33,23 @@ func TestAIFlowPostgres(t *testing.T) {
 		t.Fatal("test database connection failed")
 	}
 	defer db.Close()
-	mux := New(db, tasks.NewStore(db), nil, nil)
+	// Own fixtures: this test does not depend on seed IDs or change demo records.
+	var teamIDs []int64
+	defer func() {
+		cleanup, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, err := db.Exec(cleanup, "DELETE FROM teams WHERE id = ANY($1)", teamIDs); err != nil {
+			t.Error(err)
+		}
+	}()
+	for i := 0; i < 3; i++ {
+		var id int64
+		if err := db.QueryRow(ctx, "INSERT INTO teams (name) VALUES ($1) RETURNING id", fmt.Sprintf("integration team %d", i)).Scan(&id); err != nil {
+			t.Fatal(err)
+		}
+		teamIDs = append(teamIDs, id)
+	}
+	mux := New(db, tasks.NewStore(db), nil, proposals.NewStore(db))
 	RegisterAIRoutes(mux, ai.New(nil, 0, false))
 	server := httptest.NewServer(mux)
 	defer server.Close()
@@ -150,5 +167,123 @@ func TestAIFlowPostgres(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("published AI task missing from catalog")
+	}
+
+	// Decisions are independent: accepting a second team must preserve the first.
+	wantStatuses := []string{"accepted", "accepted", "rejected"}
+	for i, teamID := range teamIDs {
+		var proposal proposals.Proposal
+		request("POST", path+"/proposals", proposals.CreateInput{
+			TeamID: teamID, SolutionIdea: "Test solution", Plan: "Build and verify", Timeline: "2 weeks",
+		}, &proposal, http.StatusCreated)
+		if proposal.Status != "pending" || proposal.TaskID != created.ID || proposal.TeamID != teamID {
+			t.Fatalf("unexpected new proposal: %+v", proposal)
+		}
+		request("PATCH", fmt.Sprintf("/api/proposals/%d", proposal.ID), proposals.StatusInput{Status: wantStatuses[i]}, &proposal, http.StatusOK)
+		if proposal.Status != wantStatuses[i] {
+			t.Fatalf("decision not applied: %+v", proposal)
+		}
+	}
+	var listed []proposals.Proposal
+	request("GET", path+"/proposals", nil, &listed, http.StatusOK)
+	statuses := map[int64]string{}
+	for _, item := range listed {
+		statuses[item.TeamID] = item.Status
+	}
+	if len(listed) != 3 {
+		t.Fatalf("expected 3 proposals, got %d", len(listed))
+	}
+	for i, id := range teamIDs {
+		if statuses[id] != wantStatuses[i] {
+			t.Fatalf("persisted decision mismatch for team %d", id)
+		}
+	}
+	var allProposals []proposals.Proposal
+	request("GET", "/api/proposals", nil, &allProposals, http.StatusOK)
+	for _, expected := range listed {
+		found := false
+		for _, actual := range allProposals {
+			if actual.ID == expected.ID {
+				found = true
+				if !reflect.DeepEqual(actual, expected) {
+					t.Fatal("global proposal list differs from task list")
+				}
+			}
+		}
+		if !found {
+			t.Fatalf("proposal %d missing from global list", expected.ID)
+		}
+	}
+
+	// Zero readiness does not prevent publication or proposals.
+	var empty tasks.Task
+	request("POST", "/api/tasks", tasks.CreateInput{InitialDescription: "Incomplete test description"}, &empty, http.StatusCreated)
+	defer func() {
+		cleanup, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if _, err := db.Exec(cleanup, "DELETE FROM tasks WHERE id = $1", empty.ID); err != nil {
+			t.Error(err)
+		}
+	}()
+	emptyPath := fmt.Sprintf("/api/tasks/%d", empty.ID)
+	// The business list includes drafts; the public catalog must not expose them.
+	request("GET", "/api/tasks?scope=all", nil, &catalog, http.StatusOK)
+	found = false
+	for _, task := range catalog {
+		if task.ID == empty.ID {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("draft missing from business list")
+	}
+	request("GET", "/api/tasks", nil, &catalog, http.StatusOK)
+	for _, task := range catalog {
+		if task.ID == empty.ID {
+			t.Fatal("draft leaked into public catalog")
+		}
+	}
+	// Invalid JSON must not clear a saved card.
+	r, err := http.NewRequestWithContext(ctx, "PUT", server.URL+path, bytes.NewBufferString("null"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	r.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("null PUT returned %d", resp.StatusCode)
+	}
+	request("GET", path, nil, &loaded, http.StatusOK)
+	if !reflect.DeepEqual(loaded.Card(), generated.Card) || loaded.ReadinessScore != 50 {
+		t.Fatal("invalid PUT changed stored card")
+	}
+	input := proposals.CreateInput{TeamID: teamIDs[0], SolutionIdea: "Test", Plan: "Test", Timeline: "1 week"}
+	request("POST", emptyPath+"/proposals", input, &rejected, http.StatusConflict)
+	if rejected.Error.Code != "task_not_published" {
+		t.Fatalf("unexpected error: %+v", rejected)
+	}
+	request("POST", emptyPath+"/confirm", nil, &loaded, http.StatusOK)
+	request("POST", emptyPath+"/publish", nil, &loaded, http.StatusOK)
+	if loaded.ReadinessScore != 0 || loaded.Status != "published" {
+		t.Fatalf("zero-score publication failed: %+v", loaded)
+	}
+	request("GET", "/api/tasks?readiness_level=draft", nil, &catalog, http.StatusOK)
+	found = false
+	for _, task := range catalog {
+		if task.ID == empty.ID {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("published zero-score task missing from catalog")
+	}
+	var proposal proposals.Proposal
+	request("POST", emptyPath+"/proposals", input, &proposal, http.StatusCreated)
+	if proposal.Status != "pending" {
+		t.Fatalf("zero-score proposal failed: %+v", proposal)
 	}
 }
