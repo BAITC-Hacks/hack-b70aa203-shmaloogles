@@ -3,6 +3,8 @@ package tasks
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/shmaloogles/business-task-platform/backend/internal/taskcard"
 )
 
 type Task struct {
@@ -36,16 +38,20 @@ type CreateInput struct {
 	InitialDescription string `json:"initial_description"`
 }
 
-type UpdateInput struct {
-	Title             *string `json:"title"`
-	Topic             *string `json:"topic"`
-	Context           *string `json:"context"`
-	Need              *string `json:"need"`
-	Users             *string `json:"users"`
-	Data              *string `json:"data"`
-	Constraints       *string `json:"constraints"`
-	ExpectedResult    *string `json:"expected_result"`
-	SuccessCriteria   *string `json:"success_criteria"`
-	Contact           *string `json:"contact"`
-	InteractionFormat *string `json:"interaction_format"`
+type UpdateInput = taskcard.Card
+
+func (task Task) Card() taskcard.Card {
+	return taskcard.Card{
+		Title:             task.Title,
+		Topic:             task.Topic,
+		Context:           task.Context,
+		Need:              task.Need,
+		Users:             task.Users,
+		Data:              task.Data,
+		Constraints:       task.Constraints,
+		ExpectedResult:    task.ExpectedResult,
+		SuccessCriteria:   task.SuccessCriteria,
+		Contact:           task.Contact,
+		InteractionFormat: task.InteractionFormat,
+	}
 }
