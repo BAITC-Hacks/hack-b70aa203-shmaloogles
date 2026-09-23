@@ -93,3 +93,35 @@ h1, h2, h3, p, a, dd { overflow-wrap: anywhere; }
 .assistant-heading strong { font-size: 16px; }
 .assistant-heading > div > span, .form-intro, .aside-note p, .creation-stepper small { font-size: 13px; color: var(--muted); }
 .aside-note { border-radius: var(--radius); background: var(--blue-light); }
+/* The project register shares the same task component as the overview cards. */
+.task-reference { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; color: var(--muted); }
+.task-card-top { justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.task-registry { --register-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(200px, .85fr); }
+.registry-caption { display: flex; justify-content: space-between; gap: 20px; padding: 0 0 18px; font-size: 13px; color: var(--muted); }
+.registry-columns { display: grid; grid-template-columns: var(--register-columns); gap: 32px; padding: 12px 24px; background: var(--blue-light); border-top: 2px solid var(--blue); font-size: 13px; color: var(--muted); }
+.task-registry-row { display: grid; grid-template-columns: var(--register-columns); grid-template-rows: auto auto 1fr auto; column-gap: 32px; padding: 24px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.task-registry-row:hover { background: #f1f6fd; border-color: var(--line); }
+.task-registry-row .task-card-top { grid-column: 1; grid-row: 1; justify-content: flex-start; margin-bottom: 10px; }
+.task-registry-row h3 { grid-column: 1; grid-row: 2; font-size: 21px; }
+.task-registry-row .task-description { grid-column: 1; grid-row: 3 / 5; margin-bottom: 0; }
+.task-registry-row .task-result { grid-column: 2; grid-row: 1 / 5; margin: 0; padding-top: 2px; }
+.task-registry-row .task-result > span { display: none; }
+.task-registry-row .task-result p { display: block; margin: 0; font-size: 15px; }
+.task-registry-row > .readiness { grid-column: 3; grid-row: 1 / 4; margin: 0; }
+.task-registry-row .task-card-footer { grid-column: 3; grid-row: 4; padding: 14px 0 0; margin-top: 18px; }
+.task-registry-row h3 a::after { border-radius: 0; }
+.bridge-rule { width: 100px; height: 24px; color: var(--blue); flex-shrink: 0; }
+.project-caption .bridge-rule { width: 70px; }
+.how-section { position: relative; }
+.how-section > .bridge-rule { position: absolute; top: -24px; right: 0; width: 120px; background: var(--canvas); }
+.project-document { padding: 28px 32px; }
+.document-caption { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 28px; color: var(--muted); font-size: 13px; }
+.document-section { border: 0; border-top: 1px solid var(--line); padding: 24px 0 0; margin: 0; min-width: 0; }
+.document-section + .document-section { margin-top: 36px; }
+.document-section legend { padding-right: 18px; font-size: 23px; font-weight: 700; letter-spacing: -.5px; }
+.document-section legend > span { color: var(--blue); font-weight: 500; margin-right: 9px; font-size: 17px; }
+.document-section-intro { color: var(--muted); font-size: 14px; margin: 0 0 24px; }
+.document-section .field:last-child { margin-bottom: 0; }
+@media (max-width: 1199px) { .task-registry { --register-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(180px, .85fr); } .task-registry-row, .registry-columns { column-gap: 20px; padding-left: 16px; padding-right: 16px; } }
+@media (max-width: 1000px) { .registry-columns { display: none; } .task-registry-row { grid-template-columns: minmax(0, 1fr) 210px; gap: 0 24px; border-top: 2px solid #bdcfe7; margin-bottom: 16px; } .task-registry-row .task-description { grid-row: 3; } .task-registry-row .task-result { grid-column: 1; grid-row: 4; padding-top: 16px; } .task-registry-row .task-result > span { display: block; margin-bottom: 5px; } .task-registry-row > .readiness { grid-column: 2; grid-row: 1 / 4; } .task-registry-row .task-card-footer { grid-column: 2; grid-row: 4; align-self: end; } }
+@media (max-width: 575px) { .task-registry-row { display: flex; padding: 22px; } .task-registry-row .task-result { margin-bottom: 24px; } .task-registry-row .task-card-footer { align-self: stretch; } .project-document { padding: 24px 20px; } .document-section legend { font-size: 20px; } .document-section legend > span { font-size: 15px; } }

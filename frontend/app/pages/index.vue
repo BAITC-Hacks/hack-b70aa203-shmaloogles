@@ -19,12 +19,12 @@ useHead({ title: 'Мост — задачи бизнеса и студенчес
     </section>
 
     <section class="home-projects">
-      <div class="section-heading"><div><span class="eyebrow muted">ОТКРЫТЫ К СОТРУДНИЧЕСТВУ</span><h2>Задачи в работе</h2><p>Сравните результат, тему и полноту описания.</p></div><NuxtLink to="/catalog" class="text-link">Весь каталог <AppIcon name="arrow" :size="18" /></NuxtLink></div>
+      <div class="section-heading"><div><span class="eyebrow muted">ОТКРЫТЫ К СОТРУДНИЧЕСТВУ</span><h2>Открытые задачи</h2><p>Сравните результат, тему и полноту описания.</p></div><NuxtLink to="/catalog" class="text-link">Весь каталог <AppIcon name="arrow" :size="18" /></NuxtLink></div>
 
       <div class="task-grid"><TaskCard v-for="task in featured" :key="task.id" :task="task" /></div>
     </section>
 
-    <section id="how-it-works" class="how-section">
+    <section id="how-it-works" class="how-section"><BridgeRule />
       <div class="section-heading"><div><span class="eyebrow muted">ПОРЯДОК РАБОТЫ</span><h2>От описания к сотрудничеству</h2></div></div>
       <div class="steps-grid">
         <article class="how-step"><div class="step-top"><span>01</span><AppIcon name="message" :size="22" /></div><h3>Расскажите о задаче</h3><p>Опишите, что хотите изменить. AI-ассистент задаст вопросы и поможет составить понятную карточку.</p><NuxtLink to="/tasks/new" @click="setRole('business')">Описать задачу <AppIcon name="arrow" :size="16" /></NuxtLink></article>

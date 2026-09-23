@@ -78,7 +78,7 @@ onMounted(() => {
         <div class="topbar-right"><span class="role-caption">Я здесь как</span><RoleSwitcher /><span class="profile-avatar" :aria-label="role === 'business' ? 'Роль: бизнес' : 'Роль: команда'">{{ role === 'business' ? 'Б' : 'К' }}<span /></span></div>
       </header>
       <main id="main-content" class="main-content" tabindex="-1"><NuxtPage /></main>
-      <footer class="footer"><span>Мост<span class="brand-dot">.</span> Задачи бизнеса. Работа команд.</span><span>Проект начинается с понятной задачи</span></footer>
+      <footer class="footer"><span>Мост<span class="brand-dot">.</span> Задачи бизнеса. Работа команд.</span><span>Бизнес / Команды</span></footer>
     </div>
   </div>
 </template>
