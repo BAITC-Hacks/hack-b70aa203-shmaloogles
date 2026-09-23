@@ -40,3 +40,19 @@ type CreateInput struct {
 
 // UpdateInput shares the AI/scoring contract without changing the CRUD JSON shape.
 type UpdateInput = taskcard.Card
+
+func (task Task) Card() taskcard.Card {
+	return taskcard.Card{
+		Title:             task.Title,
+		Topic:             task.Topic,
+		Context:           task.Context,
+		Need:              task.Need,
+		Users:             task.Users,
+		Data:              task.Data,
+		Constraints:       task.Constraints,
+		ExpectedResult:    task.ExpectedResult,
+		SuccessCriteria:   task.SuccessCriteria,
+		Contact:           task.Contact,
+		InteractionFormat: task.InteractionFormat,
+	}
+}
