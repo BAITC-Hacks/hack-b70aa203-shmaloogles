@@ -38,7 +38,7 @@ func (s *recordingAIStore) Update(_ context.Context, _ int64, input tasks.Update
 
 func TestAIHTTPToTaskUpdate(t *testing.T) {
 	store := &recordingAIStore{fakeTaskStore: fakeTaskStore{task: tasks.Task{ID: 42, Status: "draft"}}}
-	mux := New(fakeDatabase{}, store, nil)
+	mux := New(fakeDatabase{}, store, nil, nil)
 	RegisterAIRoutes(mux, ai.New(nil, 0, false))
 	q := httptest.NewRecorder()
 	mux.ServeHTTP(q, httptest.NewRequest("POST", "/api/tasks/clarify", strings.NewReader(`{"description":"Заказы в таблице"}`)))
@@ -82,7 +82,7 @@ func TestAIHTTPInvalidInput(t *testing.T) {
 			{"too large", `{"description":"` + strings.Repeat("x", (1<<20)+1) + `"}`, 413},
 		} {
 			t.Run(path+tc.name, func(t *testing.T) {
-				mux := New(fakeDatabase{}, nil, nil)
+				mux := New(fakeDatabase{}, nil, nil, nil)
 				RegisterAIRoutes(mux, ai.New(nil, 0, false))
 				r := httptest.NewRecorder()
 				mux.ServeHTTP(r, httptest.NewRequest("POST", path, strings.NewReader(tc.body)))
@@ -108,7 +108,7 @@ func TestAIHTTPErrorsAndFallback(t *testing.T) {
 	} {
 		for _, path := range []string{"/api/tasks/clarify", "/api/tasks/generate"} {
 			for _, fallback := range []bool{false, true} {
-				mux := New(fakeDatabase{}, nil, nil)
+				mux := New(fakeDatabase{}, nil, nil, nil)
 				RegisterAIRoutes(mux, ai.New(tc.provider, time.Millisecond, fallback))
 				r := httptest.NewRecorder()
 				mux.ServeHTTP(r, httptest.NewRequest(http.MethodPost, path, strings.NewReader(`{"description":"x"}`)))

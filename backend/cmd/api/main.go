@@ -12,6 +12,7 @@ import (
 
 	"github.com/shmaloogles/business-task-platform/backend/internal/ai"
 	"github.com/shmaloogles/business-task-platform/backend/internal/database"
+	"github.com/shmaloogles/business-task-platform/backend/internal/proposals"
 	"github.com/shmaloogles/business-task-platform/backend/internal/server"
 	"github.com/shmaloogles/business-task-platform/backend/internal/tasks"
 	"github.com/shmaloogles/business-task-platform/backend/internal/teams"
@@ -41,12 +42,13 @@ func main() {
 		os.Exit(1)
 	}
 	defer db.Close()
-	handler := server.New(db, tasks.NewStore(db), teams.NewStore(db))
+	handler := server.New(db, tasks.NewStore(db), teams.NewStore(db), proposals.NewStore(db))
 	server.RegisterAIRoutes(handler, aiService)
+	allowedOrigin := os.Getenv("CORS_ORIGIN")
 
 	httpServer := &http.Server{
 		Addr:              ":" + port,
-		Handler:           handler,
+		Handler:           server.CORS(handler, allowedOrigin),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
