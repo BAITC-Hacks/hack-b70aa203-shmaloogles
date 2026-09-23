@@ -65,18 +65,30 @@ task.RecalculateReadiness()
 ответы в соответствующие поля, остальные оставляет `null`. Она не анализирует смысл
 описания и может повторно спросить об уже упомянутом факте. Не показывать её как LLM.
 
-Реальный провайдер — изолированный REST-клиент Gemini, без SDK и новых зависимостей.
-Контракт сверялся с [официальным generateContent API](https://ai.google.dev/api/generate-content).
+Реальный провайдер — изолированный клиент OpenAI Responses API, без SDK и новых
+зависимостей. Используется [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
+с `text.format.type=json_schema` и `strict=true`. По умолчанию —
+[`gpt-4.1-mini`](https://developers.openai.com/api/docs/models/gpt-4.1-mini).
+Предыдущий Gemini-клиент заменён: `AI_MODE=gemini` больше не поддерживается.
 Переменные окружения:
 
 | Переменная | Значение |
 | --- | --- |
-| `AI_MODE` | `mock` (по умолчанию) или `gemini` |
-| `AI_API_KEY` | Ключ, обязателен в режиме `gemini`; хранить только в окружении |
-| `AI_MODEL` | Доступный вашему аккаунту ID модели с поддержкой JSON Schema; обязателен |
-| `AI_BASE_URL` | По умолчанию `https://generativelanguage.googleapis.com/v1beta` |
+| `AI_MODE` | `mock` (по умолчанию) или `openai` |
+| `OPENAI_API_KEY` | Ключ, обязателен в режиме `openai`; хранить только в окружении backend |
+| `AI_MODEL` | По умолчанию `gpt-4.1-mini`; можно указать доступную модель с JSON Schema |
+| `AI_BASE_URL` | По умолчанию `https://api.openai.com/v1` |
 | `AI_TIMEOUT` | Go duration, например `20s` (по умолчанию) |
 | `AI_FALLBACK` | `false` по умолчанию; `true` включает заглушку при сбое реального AI |
+
+Для включения экспортируйте `AI_MODE=openai`, `OPENAI_API_KEY` и при необходимости
+`AI_MODEL` перед `go run ./cmd/api`. `.env` автоматически Go-приложением не читается;
+одного изменения файла недостаточно. Ключ не передаётся frontend и не коммитится.
+`AI_API_KEY` заменён на стандартное имя `OPENAI_API_KEY`.
+Ответ ограничен 4096 токенами, автоматических повторов нет. Запросы отправляются
+с `store=false`. Отказы модели, незавершённые ответы и ошибки 401/429/5xx обрабатываются
+через существующий контракт ошибок/fallback. Лимит токенов не является лимитом расходов
+аккаунта; остаток предоставленного бюджета $50 код не проверяет.
 
 Fallback возвращает `mode: fallback` и причину `timeout`, `provider_error` или
 `invalid_response`. UI должен явно показать переход на заглушку. Ошибка конфигурации
