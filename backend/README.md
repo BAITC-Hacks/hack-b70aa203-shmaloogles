@@ -35,6 +35,9 @@ The server listens on port `8080` by default. Set `PORT` to override it.
 - `POST /api/tasks/{id}/confirm` — confirm a draft and finalize its readiness
 - `POST /api/tasks/{id}/publish` — publish a confirmed task
 - `GET /api/teams` — list demo teams
+- `POST /api/tasks/{id}/proposals` — submit a proposal to a published task
+- `GET /api/tasks/{id}/proposals` — list proposals for a task
+- `PATCH /api/proposals/{id}` — accept or reject a proposal
 - `POST /api/tasks/clarify` — AI clarification; body `{"description":"..."}`
 - `POST /api/tasks/generate` — generate a card and a preliminary readiness score;
   body `{"description":"...","answers":[{"field":"need","answer":"..."}]}`

@@ -32,7 +32,7 @@ func TestAIFlowPostgres(t *testing.T) {
 		t.Fatal("test database connection failed")
 	}
 	defer db.Close()
-	mux := New(db, tasks.NewStore(db), nil)
+	mux := New(db, tasks.NewStore(db), nil, nil)
 	RegisterAIRoutes(mux, ai.New(nil, 0, false))
 	server := httptest.NewServer(mux)
 	defer server.Close()
