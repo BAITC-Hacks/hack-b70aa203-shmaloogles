@@ -9,13 +9,51 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/shmaloogles/business-task-platform/backend/internal/scoring"
 	"github.com/shmaloogles/business-task-platform/backend/internal/tasks"
 )
 
 type taskStore interface {
 	Create(context.Context, tasks.CreateInput) (tasks.Task, error)
 	Get(context.Context, int64) (tasks.Task, error)
-	Update(context.Context, int64, tasks.UpdateInput) (tasks.Task, error)
+	List(context.Context, tasks.ListFilter) ([]tasks.Task, error)
+	Update(context.Context, int64, tasks.UpdateInput, scoring.Result) (tasks.Task, error)
+	Confirm(context.Context, int64, scoring.Result) (tasks.Task, error)
+	Publish(context.Context, int64) (tasks.Task, error)
+}
+
+func listTasksHandler(store taskStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		filter := tasks.ListFilter{
+			Topic:          strings.TrimSpace(r.URL.Query().Get("topic")),
+			ReadinessLevel: strings.TrimSpace(r.URL.Query().Get("readiness_level")),
+			Sort:           strings.TrimSpace(r.URL.Query().Get("sort")),
+		}
+		if !validReadinessLevel(filter.ReadinessLevel) {
+			writeError(w, http.StatusBadRequest, "invalid_readiness_level", "readiness_level must be draft, workable, ready, or priority")
+			return
+		}
+		if filter.Sort != "" && filter.Sort != "readiness_desc" && filter.Sort != "readiness_asc" {
+			writeError(w, http.StatusBadRequest, "invalid_sort", "sort must be readiness_desc or readiness_asc")
+			return
+		}
+
+		items, err := store.List(r.Context(), filter)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "could not list tasks")
+			return
+		}
+		writeJSON(w, http.StatusOK, items)
+	}
+}
+
+func validReadinessLevel(level string) bool {
+	switch level {
+	case "", "draft", "workable", "ready", "priority":
+		return true
+	default:
+		return false
+	}
 }
 
 type errorResponse struct {
@@ -83,7 +121,8 @@ func updateTaskHandler(store taskStore) http.HandlerFunc {
 			return
 		}
 
-		task, err := store.Update(r.Context(), id, input)
+		readiness := scoring.Calculate(input)
+		task, err := store.Update(r.Context(), id, input, readiness)
 		if errors.Is(err, tasks.ErrNotFound) {
 			writeError(w, http.StatusNotFound, "task_not_found", "task not found")
 			return
@@ -94,6 +133,76 @@ func updateTaskHandler(store taskStore) http.HandlerFunc {
 		}
 		writeJSON(w, http.StatusOK, task)
 	}
+}
+
+func confirmTaskHandler(store taskStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, ok := taskID(w, r)
+		if !ok {
+			return
+		}
+
+		task, err := store.Get(r.Context(), id)
+		if !handleTaskLookupError(w, err) {
+			return
+		}
+		if task.Status != "draft" {
+			writeError(w, http.StatusConflict, "invalid_task_status", "only a draft task can be confirmed")
+			return
+		}
+
+		task, err = store.Confirm(r.Context(), id, scoring.Calculate(task.Card()))
+		if errors.Is(err, tasks.ErrNotFound) {
+			writeError(w, http.StatusConflict, "invalid_task_status", "task status changed; reload and try again")
+			return
+		}
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "could not confirm task")
+			return
+		}
+		writeJSON(w, http.StatusOK, task)
+	}
+}
+
+func publishTaskHandler(store taskStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, ok := taskID(w, r)
+		if !ok {
+			return
+		}
+
+		task, err := store.Get(r.Context(), id)
+		if !handleTaskLookupError(w, err) {
+			return
+		}
+		if task.Status != "confirmed" {
+			writeError(w, http.StatusConflict, "invalid_task_status", "only a confirmed task can be published")
+			return
+		}
+
+		task, err = store.Publish(r.Context(), id)
+		if errors.Is(err, tasks.ErrNotFound) {
+			writeError(w, http.StatusConflict, "invalid_task_status", "task status changed; reload and try again")
+			return
+		}
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "could not publish task")
+			return
+		}
+		writeJSON(w, http.StatusOK, task)
+	}
+}
+
+func handleTaskLookupError(w http.ResponseWriter, err error) bool {
+	if errors.Is(err, tasks.ErrNotFound) {
+		writeError(w, http.StatusNotFound, "task_not_found", "task not found")
+		return false
+	}
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal_error", "could not get task")
+		return false
+	}
+	return true
 }
 
 func taskID(w http.ResponseWriter, r *http.Request) (int64, bool) {
