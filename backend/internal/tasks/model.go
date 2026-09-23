@@ -38,6 +38,12 @@ type CreateInput struct {
 	InitialDescription string `json:"initial_description"`
 }
 
+type ListFilter struct {
+	Topic          string
+	ReadinessLevel string
+	Sort           string
+}
+
 type UpdateInput = taskcard.Card
 
 func (task Task) Card() taskcard.Card {

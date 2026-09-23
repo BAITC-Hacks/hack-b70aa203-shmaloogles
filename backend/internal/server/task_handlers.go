@@ -16,9 +16,44 @@ import (
 type taskStore interface {
 	Create(context.Context, tasks.CreateInput) (tasks.Task, error)
 	Get(context.Context, int64) (tasks.Task, error)
+	List(context.Context, tasks.ListFilter) ([]tasks.Task, error)
 	Update(context.Context, int64, tasks.UpdateInput, scoring.Result) (tasks.Task, error)
 	Confirm(context.Context, int64, scoring.Result) (tasks.Task, error)
 	Publish(context.Context, int64) (tasks.Task, error)
+}
+
+func listTasksHandler(store taskStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		filter := tasks.ListFilter{
+			Topic:          strings.TrimSpace(r.URL.Query().Get("topic")),
+			ReadinessLevel: strings.TrimSpace(r.URL.Query().Get("readiness_level")),
+			Sort:           strings.TrimSpace(r.URL.Query().Get("sort")),
+		}
+		if !validReadinessLevel(filter.ReadinessLevel) {
+			writeError(w, http.StatusBadRequest, "invalid_readiness_level", "readiness_level must be draft, workable, ready, or priority")
+			return
+		}
+		if filter.Sort != "" && filter.Sort != "readiness_desc" && filter.Sort != "readiness_asc" {
+			writeError(w, http.StatusBadRequest, "invalid_sort", "sort must be readiness_desc or readiness_asc")
+			return
+		}
+
+		items, err := store.List(r.Context(), filter)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "internal_error", "could not list tasks")
+			return
+		}
+		writeJSON(w, http.StatusOK, items)
+	}
+}
+
+func validReadinessLevel(level string) bool {
+	switch level {
+	case "", "draft", "workable", "ready", "priority":
+		return true
+	default:
+		return false
+	}
 }
 
 type errorResponse struct {

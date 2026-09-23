@@ -49,6 +49,43 @@ func (store *Store) Get(ctx context.Context, id int64) (Task, error) {
 	return task, nil
 }
 
+func (store *Store) List(ctx context.Context, filter ListFilter) ([]Task, error) {
+	query := `SELECT ` + taskColumns + ` FROM tasks WHERE status = 'published'`
+	args := make([]any, 0, 2)
+	if filter.Topic != "" {
+		args = append(args, filter.Topic)
+		query += fmt.Sprintf(" AND topic = $%d", len(args))
+	}
+	if filter.ReadinessLevel != "" {
+		args = append(args, filter.ReadinessLevel)
+		query += fmt.Sprintf(" AND readiness_level = $%d", len(args))
+	}
+	if filter.Sort == "readiness_asc" {
+		query += " ORDER BY readiness_score ASC, published_at DESC"
+	} else {
+		query += " ORDER BY readiness_score DESC, published_at DESC"
+	}
+
+	rows, err := store.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list tasks: %w", err)
+	}
+	defer rows.Close()
+
+	tasks := make([]Task, 0)
+	for rows.Next() {
+		task, err := scanTask(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan task: %w", err)
+		}
+		tasks = append(tasks, task)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("list task rows: %w", err)
+	}
+	return tasks, nil
+}
+
 func (store *Store) Update(ctx context.Context, id int64, input UpdateInput, readiness scoring.Result) (Task, error) {
 	breakdown, suggestions, err := readinessValues(readiness)
 	if err != nil {
