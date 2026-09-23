@@ -1,75 +1,61 @@
-# Nuxt Minimal Starter
+# Мост — frontend
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Адаптивный интерфейс платформы для сотрудничества бизнеса и студенческих команд. Реализован на существующем **Nuxt 4 / Vue 3 / TypeScript**.
 
-## Setup
-
-Make sure to install dependencies:
+## Запуск
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
-
-Build the application for production:
+Откройте `http://localhost:3000`.
 
 ```bash
-# npm
+npm run typecheck
 npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
 npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Экраны
+
+| Маршрут | Содержимое |
+| --- | --- |
+| `/` | Обзор платформы, задачи и описание процесса |
+| `/catalog` | Каталог, поиск, фильтры, сортировка по готовности |
+| `/catalog/:id` | Полная карточка и предложение решения |
+| `/tasks` | Задачи бизнеса и черновики |
+| `/tasks/new` | Описание идеи и три уточняющих вопроса |
+| `/tasks/:id/edit` | Редактор, рейтинг готовности, подтверждение публикации |
+| `/tasks/:id/proposals` | Предложения по выбранной задаче |
+| `/proposals` | Предложения и их статусы, действия для роли бизнеса |
+
+## Деморежим
+
+Интерфейс работает без backend. Вымышленные задачи и предложения находятся в `app/data/demo.ts` и обозначены как демонстрационные.
+
+В переключателе в шапке доступны роли «Бизнес» и «Команда». Можно пройти сценарий:
+
+1. Бизнес создаёт описание и отвечает на три подготовленных вопроса.
+2. Ответы переносятся в редактируемую карточку. Неуказанные поля остаются пустыми.
+3. Рейтинг пересчитывается по весам из корневого `README.md`. В демо баллы начисляются за заполненные поля.
+4. После явного подтверждения карточка появляется в каталоге.
+5. Команда отправляет предложение с идеей, планом и сроками.
+6. Бизнес принимает или отклоняет предложение.
+
+**LLM и серверные запросы в деморежиме не выполняются.** Вопросы фиксированные; автоматического анализа текста нет. Данные сохраняются в `localStorage` текущего браузера под ключом `most-demo-v1`. Если хранилище недоступно, интерфейс работает в пределах текущей сессии. Для сброса демо удалите этот ключ.
+
+## Структура
+
+- `app/assets/css/main.css` — палитра, типографика, общие компоненты, адаптивная вёрстка и режим уменьшенного движения.
+- `app/app.vue` — боковая навигация, мобильное меню и шапка.
+- `app/components/` — карточки, формы, иллюстрация и переиспользуемые элементы.
+- `app/pages/` — экраны приложения.
+- `app/composables/useDemo.ts` — локальное демо-состояние и действия.
+- `app/plugins/demo.client.ts` — восстановление и сохранение состояния в браузере.
+- `app/utils/readiness.ts` — расчёт готовности задачи.
+- `app/composables/useApi.ts` — существующий REST-клиент для будущего подключения backend.
+
+Адрес API задаётся переменной `NUXT_PUBLIC_API_BASE` (по умолчанию `http://localhost:8080`). При подключении backend локальные операции `useDemo` необходимо заменить серверными; готового API-контракта в репозитории пока нет.
+
+Интерфейс использует Manrope с Google Fonts и системный шрифт при отсутствии сети. Иконки и иллюстрация — локальные SVG. Дополнительные UI-библиотеки не требуются.

@@ -1,8 +1,7 @@
 export type Role = 'business' | 'team';
 
-const role = ref<Role>('business');
-
 export function useRole() {
+  const role = useState<Role>('role', () => 'business');
   const setRole = (next: Role) => {
     role.value = next;
   };

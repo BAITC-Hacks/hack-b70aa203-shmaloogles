@@ -1,6 +1,5 @@
-const config = useRuntimeConfig();
-
 export function useApi() {
+  const config = useRuntimeConfig();
   const base = config.public.apiBase;
 
   const request = async <T>(path: string, init?: RequestInit): Promise<T> => {

@@ -1,12 +1,7 @@
 <template>
-  <div>
-    <label>
-      Роль:
-      <select v-model="role" @change="setRole(role)">
-        <option value="business">Business</option>
-        <option value="team">Team</option>
-      </select>
-    </label>
+  <div class="role-switcher" role="group" aria-label="Выбор демонстрационной роли">
+    <button :class="{ selected: role === 'business' }" :aria-pressed="role === 'business'" @click="setRole('business')"><AppIcon name="briefcase" :size="16" />Бизнес</button>
+    <button :class="{ selected: role === 'team' }" :aria-pressed="role === 'team'" @click="setRole('team')"><AppIcon name="users" :size="16" />Команда</button>
   </div>
 </template>
 

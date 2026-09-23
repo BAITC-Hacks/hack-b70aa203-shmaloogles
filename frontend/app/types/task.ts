@@ -28,6 +28,12 @@ export interface Task {
   card: TaskCard;
   score: ReadinessScore;
   status: TaskStatus;
+  category?: string;
+  organization?: string;
+  tags?: string[];
+  icon?: string;
+  color?: string;
+  isExample?: boolean;
 }
 
 export type ProposalStatus = 'pending' | 'accepted' | 'rejected';
