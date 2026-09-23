@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,6 +15,42 @@ type fakeProposalStore struct {
 	proposal proposals.Proposal
 	items    []proposals.Proposal
 	err      error
+}
+
+func TestPrototypeURLValidation(t *testing.T) {
+	for _, tc := range []struct {
+		value string
+		valid bool
+	}{
+		{"", true}, {"  ", true}, {"https://example.com/demo?q=1#preview", true},
+		{" http://localhost:3000/demo ", true}, {"https://[::1]/", true},
+		{"javascript:alert(1)", false}, {"data:text/html,test", false},
+		{"ftp://example.com", false}, {"//example.com", false}, {"example.com", false},
+		{"https:///demo", false}, {"https://", false}, {"https://user:pass@example.com", false},
+		{"https://example.com/a b", false}, {"https://example.com/\n", true},
+		{"https://example.com/a\nb", false}, {"https://example.com/%zz", false},
+	} {
+		t.Run(tc.value, func(t *testing.T) {
+			body, err := json.Marshal(proposals.CreateInput{TeamID: 1, SolutionIdea: "idea", Plan: "plan", Timeline: "week", PrototypeURL: &tc.value})
+			if err != nil {
+				t.Fatal(err)
+			}
+			var store proposalStore // Invalid input must return before touching storage.
+			want := http.StatusBadRequest
+			if tc.valid {
+				store = fakeProposalStore{}
+				want = http.StatusCreated
+			}
+			r := httptest.NewRecorder()
+			New(fakeDatabase{}, nil, nil, store).ServeHTTP(r, httptest.NewRequest("POST", "/api/tasks/1/proposals", strings.NewReader(string(body))))
+			if r.Code != want {
+				t.Fatalf("got %d, want %d: %s", r.Code, want, r.Body)
+			}
+			if !tc.valid && !strings.Contains(r.Body.String(), "invalid_prototype_url") {
+				t.Fatal(r.Body.String())
+			}
+		})
+	}
 }
 
 func (store fakeProposalStore) Create(context.Context, int64, proposals.CreateInput) (proposals.Proposal, error) {
