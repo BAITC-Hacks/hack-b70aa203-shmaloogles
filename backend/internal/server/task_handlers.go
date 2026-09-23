@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -220,7 +221,19 @@ func taskID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 }
 
 func decodeJSON(r *http.Request, value any) error {
-	decoder := json.NewDecoder(r.Body)
+	const maxBody = 1 << 20
+	raw, err := io.ReadAll(io.LimitReader(r.Body, maxBody+1))
+	if err != nil {
+		return err
+	}
+	if len(raw) > maxBody {
+		return &http.MaxBytesError{Limit: maxBody}
+	}
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] != '{' {
+		return errors.New("request body must be a JSON object")
+	}
+	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(value); err != nil {
 		return err
