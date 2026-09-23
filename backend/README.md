@@ -73,6 +73,32 @@ It uses mock AI explicitly: no API key or paid model requests are needed.
 
 ## Database
 
+### Recalculate existing readiness
+
+Seed changes only affect newly created database volumes. To update existing
+derived scores, export `DATABASE_URL` and run from `backend`:
+
+```sh
+go run ./cmd/recalculate-readiness
+go run ./cmd/recalculate-readiness -apply
+```
+
+The first command is a dry-run (transaction rolled back); the second commits.
+Both lock task rows briefly, so run during a quiet period. The command times out
+after 30 seconds and uses the same deterministic scorer as the API, without AI.
+It updates only score, level, breakdown, missing fields and suggestions for all
+tasks. Cards, lifecycle states, timestamps and proposals are preserved. Repeating
+the command is safe. It does not load `.env` automatically. Back up important data
+before applying maintenance commands.
+
+### CI
+
+The Backend GitHub Actions workflow runs on pushes and pull requests: formatting,
+tests (including PostgreSQL integration), vet and build. Its PostgreSQL service is
+initialized from the migration and seed; it uses mock AI and needs no API secrets.
+
+### Local database
+
 From the repository root, start PostgreSQL with:
 
 ```sh

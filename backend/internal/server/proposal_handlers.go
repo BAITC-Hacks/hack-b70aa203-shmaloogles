@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -51,6 +52,11 @@ func createProposalHandler(store proposalStore) http.HandlerFunc {
 			if trimmed == "" {
 				input.PrototypeURL = nil
 			} else {
+				parsed, err := url.Parse(trimmed)
+				if err != nil || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.Hostname() == "" || parsed.User != nil || strings.ContainsAny(trimmed, " \t\r\n\\") {
+					writeError(w, http.StatusBadRequest, "invalid_prototype_url", "prototype_url must be an absolute HTTP or HTTPS URL without credentials")
+					return
+				}
 				input.PrototypeURL = &trimmed
 			}
 		}
